@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -35,26 +36,36 @@ export const bots = pgTable("bots", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const conversations = pgTable("conversations", {
-  id: serial("id").primaryKey(),
-  botId: integer("bot_id")
-    .notNull()
-    .references(() => bots.id, { onDelete: "cascade" }),
-  title: text("title").notNull().default("New chat"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: serial("id").primaryKey(),
+    botId: integer("bot_id")
+      .notNull()
+      .references(() => bots.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("New chat"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // A bot's threads, newest first.
+  (table) => [index("conversations_bot_id_updated_at_idx").on(table.botId, table.updatedAt)],
+);
 
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id")
-    .notNull()
-    .references(() => conversations.id, { onDelete: "cascade" }),
-  role: text("role").notNull(),
-  content: text("content").notNull(),
-  engine: text("engine").notNull().default("demo"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const messages = pgTable(
+  "messages",
+  {
+    id: serial("id").primaryKey(),
+    conversationId: integer("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    engine: text("engine").notNull().default("demo"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Transcript reads, per-conversation counts and "latest message" lookups.
+  (table) => [index("messages_conversation_id_id_idx").on(table.conversationId, table.id)],
+);
 
 export const runtimeSettings = pgTable("runtime_settings", {
   id: integer("id").primaryKey().default(1),
@@ -84,32 +95,42 @@ export const botAutomations = pgTable("bot_automations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const automationRuns = pgTable("automation_runs", {
-  id: serial("id").primaryKey(),
-  botId: integer("bot_id")
-    .notNull()
-    .references(() => bots.id, { onDelete: "cascade" }),
-  kind: text("kind").notNull().default("journal"),
-  status: text("status").notNull().default("sent"),
-  content: text("content").notNull().default(""),
-  partnerBotId: integer("partner_bot_id"),
-  partnerContent: text("partner_content"),
-  conversationId: integer("conversation_id"),
-  meta: jsonb("meta").$type<Record<string, string | number | boolean | null>>().notNull().default(sql`'{}'::jsonb`),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const automationRuns = pgTable(
+  "automation_runs",
+  {
+    id: serial("id").primaryKey(),
+    botId: integer("bot_id")
+      .notNull()
+      .references(() => bots.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().default("journal"),
+    status: text("status").notNull().default("sent"),
+    content: text("content").notNull().default(""),
+    partnerBotId: integer("partner_bot_id"),
+    partnerContent: text("partner_content"),
+    conversationId: integer("conversation_id"),
+    meta: jsonb("meta").$type<Record<string, string | number | boolean | null>>().notNull().default(sql`'{}'::jsonb`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // "How many actions has this bot taken today?" (the daily cap).
+  (table) => [index("automation_runs_bot_id_created_at_idx").on(table.botId, table.createdAt)],
+);
 
-export const automationTasks = pgTable("automation_tasks", {
-  id: serial("id").primaryKey(),
-  botId: integer("bot_id")
-    .notNull()
-    .references(() => bots.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  detail: text("detail").notNull().default(""),
-  done: boolean("done").notNull().default(false),
-  sourceRunId: integer("source_run_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const automationTasks = pgTable(
+  "automation_tasks",
+  {
+    id: serial("id").primaryKey(),
+    botId: integer("bot_id")
+      .notNull()
+      .references(() => bots.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    detail: text("detail").notNull().default(""),
+    done: boolean("done").notNull().default(false),
+    sourceRunId: integer("source_run_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // The task list: open tasks first, newest first.
+  (table) => [index("automation_tasks_done_id_idx").on(table.done, table.id)],
+);
 
 export type Bot = typeof bots.$inferSelect;
 export type NewBot = typeof bots.$inferInsert;
