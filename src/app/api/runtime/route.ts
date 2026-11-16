@@ -4,6 +4,7 @@ import { ensureSeeded, getRuntime } from "@/lib/data";
 import { badRequest } from "@/lib/http";
 import { isValidTimeZone } from "@/lib/time";
 import { clampRuntimeLimit } from "@/lib/types";
+import { sanitizeBaseUrl } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,11 @@ export async function PUT(request: Request) {
     ? Math.min(1.5, Math.max(0, temperatureRaw))
     : 0.8;
 
+  // An empty URL falls back to the default; anything else must be http(s).
+  const baseUrlRaw = String(body.baseUrl ?? "").trim();
+  const baseUrl = baseUrlRaw ? sanitizeBaseUrl(baseUrlRaw) : "http://127.0.0.1:11434/v1";
+  if (!baseUrl) return badRequest("Server URL must be a valid http:// or https:// address (300 characters at most).");
+
   // Timezone is optional; when present it must be a real IANA name.
   const timezoneRaw = typeof body.timezone === "string" ? body.timezone.trim() : undefined;
   if (timezoneRaw !== undefined && !isValidTimeZone(timezoneRaw)) {
@@ -43,7 +49,7 @@ export async function PUT(request: Request) {
   const values = {
     id: 1,
     provider,
-    baseUrl: String(body.baseUrl ?? "").trim().slice(0, 300) || "http://127.0.0.1:11434/v1",
+    baseUrl,
     model: String(body.model ?? "").trim().slice(0, 120) || "llama3.2",
     ...apiKeyChange,
     temperature,
