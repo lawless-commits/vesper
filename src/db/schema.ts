@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -60,11 +61,14 @@ export const messages = pgTable(
       .references(() => conversations.id, { onDelete: "cascade" }),
     role: text("role").notNull(),
     content: text("content").notNull(),
-    engine: text("engine").notNull().default("demo"),
+    engine: text("engine").notNull().default("vesper-local"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   // Transcript reads, per-conversation counts and "latest message" lookups.
-  (table) => [index("messages_conversation_id_id_idx").on(table.conversationId, table.id)],
+  (table) => [
+    index("messages_conversation_id_id_idx").on(table.conversationId, table.id),
+    check("messages_role_check", sql`${table.role} in ('user', 'assistant')`),
+  ],
 );
 
 export const runtimeSettings = pgTable("runtime_settings", {

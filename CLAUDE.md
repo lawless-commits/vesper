@@ -3,7 +3,8 @@ Next.js 16 (App Router) + Postgres via Drizzle. Local-first AI companion app.
 
 ## Commands
 - npm run dev / build / typecheck / lint / test
-- npx drizzle-kit push (dev schema sync)
+- npm run db:generate / db:migrate (schema changes go through migrations in drizzle/)
+- npm run db:push (only for databases originally created with push)
 
 ## Rules
 - One roadmap item per branch and per commit. Do not touch unrelated files.

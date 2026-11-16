@@ -1,0 +1,2 @@
+ALTER TABLE "messages" ALTER COLUMN "engine" SET DEFAULT 'vesper-local';--> statement-breakpoint
+ALTER TABLE "messages" ADD CONSTRAINT "messages_role_check" CHECK ("messages"."role" in ('user', 'assistant'));
