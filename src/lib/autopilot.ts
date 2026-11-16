@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   automationRuns,
@@ -359,6 +359,7 @@ export type RunOutcome = {
 /**
  * Execute one autonomous cycle for a single bot.
  * Guardrails: enabled flag, cadence, quiet hours (01:00-07:00 local) and a daily cap.
+ * Safe to call concurrently: the cadence check is an atomic claim (see claimSlot).
  */
 export async function runBotCycle(input: {
   botId: number;
@@ -390,16 +391,34 @@ export async function runBotCycle(input: {
 
   if (!automation.enabled && !input.force) return core("Autopilot is off for this bot.");
   if (!input.force && isQuietHour(now)) return core("Quiet hours — nothing sent between 01:00 and 07:00.");
-  if (!input.force && automation.lastRunAt) {
-    const due = automation.lastRunAt.getTime() + automation.cadenceMinutes * 60 * 1000;
-    if (now.getTime() < due) return core("Not due yet.");
-  }
 
   const runsToday = await countRunsToday(bot.id);
   if (!withinDailyLimit(runsToday, automation.dailyLimit)) {
     return core(`Daily limit of ${automation.dailyLimit} actions reached.`);
   }
 
+  // Claim before doing any work. Losing the claim means another tab or cron
+  // call got here first (or the cadence has not elapsed).
+  const claimed = await claimSlot(automation.id, Boolean(input.force), now);
+  if (!claimed) return core("Not due yet.");
+
+  try {
+    return await performCycle({ automation, bot, botView, runsToday, now });
+  } catch (error) {
+    await releaseSlot(automation.id, now, automation.lastRunAt).catch(() => undefined);
+    throw error;
+  }
+}
+
+/** The actual work of one cycle. Only called by the caller that won claimSlot(). */
+async function performCycle(input: {
+  automation: typeof botAutomations.$inferSelect;
+  bot: typeof bots.$inferSelect;
+  botView: BotView;
+  runsToday: number;
+  now: Date;
+}): Promise<RunOutcome> {
+  const { automation, bot, botView, runsToday, now } = input;
   const actions = (Array.isArray(automation.actions) && automation.actions.length
     ? automation.actions
     : ["journal"]) as string[];
@@ -409,7 +428,6 @@ export async function runBotCycle(input: {
   if (kind === "journal") {
     const content = composeJournal(botView, seed);
     await db.insert(automationRuns).values({ botId: bot.id, kind, status: "sent", content });
-    await touch(automation.id);
     return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: "Published a transmission." };
   }
 
@@ -418,8 +436,7 @@ export async function runBotCycle(input: {
     if (!others.length) {
       const content = composeJournal(botView, seed);
       await db.insert(automationRuns).values({ botId: bot.id, kind: "journal", status: "sent", content });
-      await touch(automation.id);
-      return { botId: bot.id, botName: bot.name, kind: "journal", status: "sent", summary: "Only one bot in the roster, posted a transmission instead." };
+        return { botId: bot.id, botName: bot.name, kind: "journal", status: "sent", summary: "Only one bot in the roster, posted a transmission instead." };
     }
     const partner = others[hash(seed) % others.length];
     const { opener, reply, topic } = composeRelay(botView, toBotView(partner));
@@ -432,7 +449,6 @@ export async function runBotCycle(input: {
       partnerContent: reply,
       meta: { topic },
     });
-    await touch(automation.id);
     return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: `Relayed with ${partner.name}.` };
   }
 
@@ -449,7 +465,6 @@ export async function runBotCycle(input: {
       content: task.title,
       meta: { taskId: created[0]?.id ?? 0 },
     });
-    await touch(automation.id);
     return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: `Added task: ${task.title}` };
   }
 
@@ -490,7 +505,6 @@ export async function runBotCycle(input: {
     content,
     conversationId: conversation.id,
   });
-  await touch(automation.id);
   return {
     botId: bot.id,
     botName: bot.name,
@@ -505,11 +519,50 @@ function truncateTitle(text: string) {
   return clean.length > 62 ? `${clean.slice(0, 61)}…` : clean || "Autopilot message";
 }
 
-async function touch(automationId: number) {
+/**
+ * Atomically claim this bot's run slot so that only one caller acts per
+ * cadence window, however many tabs or cron jobs tick at the same moment.
+ *
+ * A single UPDATE both checks "is it due?" and stamps last_run_at, so of N
+ * concurrent callers exactly one gets a row back. Forced runs skip the cadence
+ * condition but still stamp last_run_at. Returns false when the slot was not
+ * free (someone else already ran, or it is not due yet).
+ */
+async function claimSlot(automationId: number, force: boolean, now: Date) {
+  const stamp = sql`${now.toISOString()}::timestamptz`;
+  const claimed = await db
+    .update(botAutomations)
+    .set({ lastRunAt: now, updatedAt: new Date() })
+    .where(
+      and(
+        eq(botAutomations.id, automationId),
+        force
+          ? undefined
+          : or(
+              isNull(botAutomations.lastRunAt),
+              sql`${botAutomations.lastRunAt} <= ${stamp} - make_interval(mins => ${botAutomations.cadenceMinutes})`,
+            ),
+      ),
+    )
+    .returning({ id: botAutomations.id });
+  return claimed.length > 0;
+}
+
+/**
+ * Give a claimed slot back after the work failed, so the bot is retried on
+ * the next tick instead of silently losing a whole cadence window. Only
+ * restores if nobody else has claimed the slot since.
+ */
+async function releaseSlot(automationId: number, claimedAt: Date, previous: Date | null) {
   await db
     .update(botAutomations)
-    .set({ lastRunAt: new Date(), updatedAt: new Date() })
-    .where(eq(botAutomations.id, automationId));
+    .set({ lastRunAt: previous })
+    .where(
+      and(
+        eq(botAutomations.id, automationId),
+        sql`${botAutomations.lastRunAt} = ${claimedAt.toISOString()}::timestamptz`,
+      ),
+    );
 }
 
 export async function tickAutomations() {
@@ -522,6 +575,8 @@ export async function tickAutomations() {
 
   const outcomes: RunOutcome[] = [];
   for (const row of rows) {
+    // Cheap pre-filter only. The authoritative "is it due?" decision is the
+    // atomic claim inside runBotCycle, which is what prevents double-firing.
     const due = !row.lastRunAt || Date.now() >= new Date(row.lastRunAt).getTime() + row.cadenceMinutes * 60 * 1000;
     if (!due) continue;
     outcomes.push(await runBotCycle({ botId: row.botId }));
