@@ -2,13 +2,15 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages } from "@/db/schema";
 import { listConversations } from "@/lib/data";
+import { badRequest, parseId } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const botIdParam = new URL(request.url).searchParams.get("botId");
-  const botId = botIdParam ? Number(botIdParam) : undefined;
-  const rows = await listConversations(Number.isInteger(botId) ? botId : undefined);
+  const botId = botIdParam === null ? undefined : parseId(botIdParam);
+  if (botId === null) return badRequest("Bad botId");
+  const rows = await listConversations(botId);
   return Response.json({ conversations: rows });
 }
 
@@ -20,8 +22,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const botId = Number(body.botId);
-  if (!Number.isInteger(botId)) return Response.json({ error: "botId is required" }, { status: 400 });
+  const botId = parseId(body.botId);
+  if (botId === null) return badRequest("botId is required");
 
   const botRows = await db.select().from(bots).where(eq(bots.id, botId)).limit(1);
   const bot = botRows[0];

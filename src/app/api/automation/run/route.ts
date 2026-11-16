@@ -1,5 +1,5 @@
 import { autopilotSnapshot, runBotCycle, tickAutomations } from "@/lib/autopilot";
-import { isSameOrigin, secretMatches } from "@/lib/http";
+import { badRequest, isSameOrigin, parseId, secretMatches } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -34,8 +34,8 @@ export async function POST(request: Request) {
 
   const mode = String(body.mode ?? "tick");
   if (mode === "bot") {
-    const botId = Number(body.botId);
-    if (!Number.isInteger(botId)) return Response.json({ error: "botId is required" }, { status: 400 });
+    const botId = parseId(body.botId);
+    if (botId === null) return badRequest("botId is required");
     const outcome = await runBotCycle({ botId, force: body.force !== false });
     return Response.json({ outcomes: [outcome], snapshot: await autopilotSnapshot() });
   }

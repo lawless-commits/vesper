@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { BotStudioForm } from "@/components/BotStudioForm";
 import { BackIcon } from "@/components/Icons";
 import { getBotById } from "@/lib/data";
+import { parseId } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditBotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const numericId = Number(id);
-  if (!Number.isInteger(numericId)) notFound();
+  const numericId = parseId(id);
+  if (numericId === null) notFound();
   const bot = await getBotById(numericId);
   if (!bot) notFound();
 

@@ -1,4 +1,5 @@
 import { approveRun, autopilotSnapshot } from "@/lib/autopilot";
+import { badRequest, parseId } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +11,9 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const id = Number(body.id);
+  const id = parseId(body.id);
   const decision = body.decision === "dismiss" ? "dismiss" : "approve";
-  if (!Number.isInteger(id)) return Response.json({ error: "id is required" }, { status: 400 });
+  if (id === null) return badRequest("id is required");
 
   const result = await approveRun(id, decision);
   if (!result.ok) return Response.json({ error: result.error }, { status: 400 });

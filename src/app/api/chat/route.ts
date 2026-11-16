@@ -2,6 +2,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages } from "@/db/schema";
 import { ensureSeeded, toBotView } from "@/lib/data";
+import { badRequest, parseId } from "@/lib/http";
 import { generateReply } from "@/lib/runtime";
 import { truncate } from "@/lib/utils";
 
@@ -17,11 +18,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const conversationId = Number(body.conversationId);
+  const conversationId = parseId(body.conversationId);
   const content = String(body.content ?? "").trim().slice(0, 4000);
-  if (!Number.isInteger(conversationId)) {
-    return Response.json({ error: "conversationId is required" }, { status: 400 });
-  }
+  if (conversationId === null) return badRequest("conversationId is required");
   if (!content) return Response.json({ error: "Message is empty" }, { status: 400 });
 
   const rows = await db

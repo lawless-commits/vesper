@@ -2,6 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bots } from "@/db/schema";
 import { ensureSeeded, toBotView } from "@/lib/data";
+import { badRequest, parseId } from "@/lib/http";
 import { draftPersona, suggestStarters } from "@/lib/persona";
 import { handleify } from "@/lib/utils";
 
@@ -107,8 +108,8 @@ export async function PATCH(request: Request) {
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  const id = Number(body.id);
-  if (!Number.isInteger(id)) return Response.json({ error: "Missing bot id" }, { status: 400 });
+  const id = parseId(body.id);
+  if (id === null) return badRequest("Missing bot id");
 
   const rows = await db.select().from(bots).where(eq(bots.id, id)).limit(1);
   const current = rows[0];

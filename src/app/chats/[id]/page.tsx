@@ -5,6 +5,7 @@ import { ChatView } from "@/components/ChatView";
 import { BackIcon, PlusIcon } from "@/components/Icons";
 import { StartChatButton } from "@/components/StartChatButton";
 import { getConversation, getRuntime, listConversations } from "@/lib/data";
+import { parseId } from "@/lib/http";
 import { runtimeBadge } from "@/lib/persona";
 import { timeAgo, truncate } from "@/lib/utils";
 
@@ -18,8 +19,8 @@ export default async function ChatPage({
   searchParams: Promise<{ say?: string }>;
 }) {
   const [{ id }, { say }] = await Promise.all([params, searchParams]);
-  const numericId = Number(id);
-  if (!Number.isInteger(numericId)) notFound();
+  const numericId = parseId(id);
+  if (numericId === null) notFound();
 
   const result = await getConversation(numericId);
   if (!result) notFound();

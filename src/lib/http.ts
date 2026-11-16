@@ -30,3 +30,34 @@ export function secretMatches(provided: string | null | undefined, expected: str
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+/** Largest value a Postgres `serial` / `integer` id column can hold. */
+const MAX_ID = 2_147_483_647;
+
+/**
+ * Parse a database id from a URL segment, query parameter or JSON body.
+ * Returns a positive integer that fits a Postgres integer column, or null.
+ * Only canonical forms are accepted: 12 or "12", but not "1.5", "-3", "",
+ * "007", "1e3" or anything too large to be a real id.
+ */
+export function parseId(value: unknown): number | null {
+  let id: number;
+  if (typeof value === "number") {
+    id = value;
+  } else if (typeof value === "string" && /^[1-9]\d{0,9}$/.test(value)) {
+    id = Number(value);
+  } else {
+    return null;
+  }
+  return Number.isInteger(id) && id >= 1 && id <= MAX_ID ? id : null;
+}
+
+/** 400 response in the API's standard `{ error }` shape. */
+export function badRequest(message: string) {
+  return Response.json({ error: message }, { status: 400 });
+}
+
+/** 404 response in the API's standard `{ error }` shape. */
+export function notFound(message: string) {
+  return Response.json({ error: message }, { status: 404 });
+}

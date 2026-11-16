@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSameOrigin, secretMatches } from "@/lib/http";
+import { badRequest, isSameOrigin, parseId, secretMatches } from "@/lib/http";
 
 function req(headers: Record<string, string>) {
   return new Request("http://localhost:3000/api/automation/run", { method: "POST", headers });
@@ -40,5 +40,31 @@ describe("secretMatches", () => {
     expect(secretMatches("", "secret")).toBe(false);
     expect(secretMatches(null, "secret")).toBe(false);
     expect(secretMatches("secret", "")).toBe(false);
+  });
+});
+
+describe("parseId", () => {
+  it("accepts canonical positive integers", () => {
+    expect(parseId("12")).toBe(12);
+    expect(parseId(12)).toBe(12);
+    expect(parseId("1")).toBe(1);
+    expect(parseId("2147483647")).toBe(2147483647);
+  });
+
+  it("rejects everything else", () => {
+    for (const value of ["abc", "1.5", "-3", "", "007", "999999999999999999", "0", " 12", "12 ", "1e3", "0x10", "2147483648"]) {
+      expect(parseId(value), JSON.stringify(value)).toBeNull();
+    }
+    for (const value of [0, -3, 1.5, NaN, Infinity, 2147483648, null, undefined, true, [12], { id: 12 }]) {
+      expect(parseId(value), String(value)).toBeNull();
+    }
+  });
+});
+
+describe("badRequest", () => {
+  it("returns 400 with a JSON error", async () => {
+    const response = badRequest("Bad id");
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Bad id" });
   });
 });
