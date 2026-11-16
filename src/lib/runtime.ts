@@ -154,6 +154,239 @@ export function fallbackNotice(error: unknown, timeoutSeconds: number) {
   return `Couldn't reach your model (${reason}). Replied with the built-in engine.`;
 }
 
+export type StreamEvent =
+  | { type: "delta"; text: string }
+  /** Always the last event. `stopped` means the caller aborted mid-reply. */
+  | { type: "done"; engine: string; notice?: string; stopped?: boolean };
+
+/**
+ * Abort signal that fires when the model has been silent for `seconds`, or
+ * when the caller's own signal fires. Unlike AbortSignal.timeout this is an
+ * idle timer: call touch() whenever data arrives, so a long reply that keeps
+ * producing tokens is never cut off.
+ */
+function idleTimeout(seconds: number, outer?: AbortSignal) {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const touch = () => {
+    clearTimeout(timer);
+    timer = setTimeout(
+      () => controller.abort(new DOMException("The operation timed out.", "TimeoutError")),
+      seconds * 1000,
+    );
+  };
+  const onOuterAbort = () => controller.abort(outer?.reason);
+  if (outer?.aborted) onOuterAbort();
+  else outer?.addEventListener("abort", onOuterAbort, { once: true });
+  touch();
+  return {
+    signal: controller.signal,
+    touch,
+    clear: () => {
+      clearTimeout(timer);
+      outer?.removeEventListener("abort", onOuterAbort);
+    },
+  };
+}
+
+/** Yield a streamed response body one line at a time. */
+async function* readLines(response: Response, onData: () => void): AsyncGenerator<string> {
+  if (!response.body) return;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      onData();
+      buffer += decoder.decode(value, { stream: true });
+      let newline = buffer.indexOf("\n");
+      while (newline >= 0) {
+        yield buffer.slice(0, newline).replace(/\r$/, "");
+        buffer = buffer.slice(newline + 1);
+        newline = buffer.indexOf("\n");
+      }
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) yield buffer;
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+}
+
+async function failedResponse(response: Response) {
+  const detail = await response.text().catch(() => "");
+  return new Error(`${response.status} ${response.statusText}${detail ? ` — ${detail.slice(0, 180)}` : ""}`);
+}
+
+/** OpenAI-compatible streaming: SSE `data:` lines ending with `data: [DONE]`. */
+async function* streamOpenAiCompatible(
+  config: RuntimeConfig,
+  system: string,
+  history: ChatTurn[],
+  userMessage: string,
+  signal?: AbortSignal,
+): AsyncGenerator<string> {
+  const guard = idleTimeout(config.timeoutSeconds, signal);
+  try {
+    const response = await fetch(openAiEndpoint(config.baseUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: toModelMessages(system, history, userMessage),
+        temperature: config.temperature,
+        max_tokens: config.maxTokens,
+        stream: true,
+      }),
+      signal: guard.signal,
+    });
+    if (!response.ok) throw await failedResponse(response);
+
+    // Non-streaming fallback: some servers ignore stream:true and answer with
+    // one ordinary JSON body.
+    if (!(response.headers.get("content-type") ?? "").includes("text/event-stream")) {
+      const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+      const content = data.choices?.[0]?.message?.content;
+      if (content) yield content;
+      return;
+    }
+
+    for await (const line of readLines(response, guard.touch)) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (payload === "[DONE]") break;
+      try {
+        const data = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> };
+        const text = data.choices?.[0]?.delta?.content;
+        if (text) yield text;
+      } catch {
+        // Skip keep-alives and anything that is not a JSON chunk.
+      }
+    }
+  } finally {
+    guard.clear();
+  }
+}
+
+/** Ollama streaming: one JSON object per line (NDJSON) from /api/chat. */
+async function* streamOllama(
+  config: RuntimeConfig,
+  system: string,
+  history: ChatTurn[],
+  userMessage: string,
+  signal?: AbortSignal,
+): AsyncGenerator<string> {
+  const guard = idleTimeout(config.timeoutSeconds, signal);
+  try {
+    const response = await fetch(ollamaEndpoint(config.baseUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: toModelMessages(system, history, userMessage),
+        stream: true,
+        options: { temperature: config.temperature, num_predict: config.maxTokens },
+      }),
+      signal: guard.signal,
+    });
+    if (!response.ok) throw await failedResponse(response);
+
+    // A server that ignores stream:true sends a single JSON object, which is
+    // also a valid one-line NDJSON stream, so the same loop covers both. If
+    // that object is pretty-printed over several lines, `raw` catches it.
+    let parsedAny = false;
+    let raw = "";
+    for await (const line of readLines(response, guard.touch)) {
+      if (!line.trim()) continue;
+      raw += line;
+      let data: { message?: { content?: string }; error?: string; done?: boolean };
+      try {
+        data = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      parsedAny = true;
+      if (data.error) throw new Error(data.error);
+      if (data.message?.content) yield data.message.content;
+      if (data.done) break;
+    }
+    if (!parsedAny && raw) {
+      const data = JSON.parse(raw) as { message?: { content?: string }; error?: string };
+      if (data.error) throw new Error(data.error);
+      if (data.message?.content) yield data.message.content;
+    }
+  } finally {
+    guard.clear();
+  }
+}
+
+/**
+ * Streaming version of generateReply. Yields text deltas as the model
+ * produces them, then exactly one `done` event.
+ *
+ * - Built-in engine: the whole reply arrives as a single delta.
+ * - Model fails before producing anything: falls back to the built-in engine
+ *   with a notice, exactly like generateReply.
+ * - Model fails part-way: keeps the partial text and reports why it stopped.
+ * - Caller aborts `signal` (Stop button, closed tab): ends with stopped: true
+ *   so the caller can save whatever text it already received.
+ */
+export async function* streamReply(input: {
+  bot: BotView;
+  history: ChatTurn[];
+  userMessage: string;
+  signal?: AbortSignal;
+}): AsyncGenerator<StreamEvent> {
+  const { bot, history, userMessage, signal } = input;
+  const runtime = await getRuntimeConfig();
+  const userName = runtime.userName || "you";
+  const builtIn = () => generateDemoReply({ bot, history, userMessage, userName });
+
+  if (runtime.provider === "demo") {
+    yield { type: "delta", text: builtIn() };
+    yield { type: "done", engine: "vesper-local" };
+    return;
+  }
+
+  const engine = `${runtime.provider}:${runtime.model}`;
+  const system = buildSystemPrompt(bot, userName);
+  let produced = false;
+  try {
+    const chunks =
+      runtime.provider === "ollama"
+        ? streamOllama(runtime, system, history, userMessage, signal)
+        : streamOpenAiCompatible(runtime, system, history, userMessage, signal);
+    for await (const text of chunks) {
+      produced = produced || text.trim().length > 0;
+      yield { type: "delta", text };
+    }
+    if (!produced) throw new Error("The local model returned an empty response");
+    yield { type: "done", engine };
+  } catch (error) {
+    if (signal?.aborted) {
+      yield { type: "done", engine, stopped: true };
+    } else if (produced) {
+      const why = isTimeout(error)
+        ? `the model went silent for ${runtime.timeoutSeconds}s`
+        : error instanceof Error
+          ? error.message
+          : "unknown error";
+      yield { type: "done", engine, notice: `The reply was cut short (${why}). The part that arrived was kept.` };
+    } else {
+      yield { type: "delta", text: builtIn() };
+      yield { type: "done", engine: "vesper-local", notice: fallbackNotice(error, runtime.timeoutSeconds) };
+    }
+  }
+}
+
 export async function probeRuntime(config: Partial<RuntimeConfig>) {
   const provider = config.provider ?? "demo";
   const baseUrl = normalizeBase(config.baseUrl ?? "");

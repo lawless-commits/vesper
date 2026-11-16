@@ -11,9 +11,11 @@ import {
   EditIcon,
   SendIcon,
   SparkIcon,
+  StopIcon,
   VolumeIcon,
   VolumeOffIcon,
 } from "@/components/Icons";
+import { readServerEvents } from "@/lib/sse";
 import type { ConversationView, MessageView } from "@/lib/types";
 
 type ChatMessage = MessageView & { pending?: boolean; failed?: boolean };
@@ -24,6 +26,10 @@ function engineLabel(engine: string) {
   if (engine.startsWith("ollama:")) return `ollama · ${engine.split(":")[1]}`;
   if (engine.startsWith("openai:")) return `local api · ${engine.split(":")[1]}`;
   return engine;
+}
+
+function lastKnownId(messages: MessageView[]) {
+  return messages.reduce((max, message) => Math.max(max, message.id), 0);
 }
 
 function MessageBubble({
@@ -128,6 +134,7 @@ export function ChatView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoSent = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
   const voiceRef = useRef(false);
   const [voiceOn, setVoiceOn] = useState(false);
 
@@ -192,14 +199,48 @@ export function ChatView({
   }, [scrollToBottom]);
 
   useEffect(() => {
-    scrollToBottom(true);
+    // Smooth scrolling on every streamed token stutters, so jump while a reply is arriving.
+    scrollToBottom(!sending);
   }, [messages, sending, scrollToBottom]);
+
+  /**
+   * Replace local state with the transcript the server actually stored.
+   * Used after Stop and after a failed send, so the screen never shows a
+   * message the server does not have (or hides one it does).
+   * With waitForReplyAfter set, polls briefly until an assistant message newer
+   * than that id exists, because the server saves a stopped reply a moment
+   * after the browser disconnects.
+   */
+  const reconcile = useCallback(
+    async (waitForReplyAfter?: number): Promise<MessageView[] | null> => {
+      const attempts = waitForReplyAfter === undefined ? 1 : 8;
+      let latest: MessageView[] | null = null;
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 250));
+        try {
+          const response = await fetch(`/api/conversations/${conversation.id}`, { cache: "no-store" });
+          if (!response.ok) continue;
+          const data = (await response.json()) as { messages?: MessageView[] };
+          latest = data.messages ?? null;
+        } catch {
+          continue;
+        }
+        const last = latest?.at(-1);
+        if (waitForReplyAfter === undefined) break;
+        if (last && last.role !== "user" && last.id > waitForReplyAfter) break;
+      }
+      if (latest) setMessages(latest);
+      return latest;
+    },
+    [conversation.id],
+  );
 
   const send = useCallback(
     async (raw: string) => {
       const content = raw.trim();
       if (!content || sending) return;
       const tempId = -Date.now();
+      const replyTempId = tempId - 1;
       const optimistic: ChatMessage = {
         id: tempId,
         role: "user",
@@ -213,44 +254,104 @@ export function ChatView({
       setSending(true);
       setError(null);
 
+      const controller = new AbortController();
+      abortRef.current = controller;
+      let savedUserId: number | null = null;
+      let replyText = "";
+      let finished = false;
+
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: conversation.id, content }),
+          body: JSON.stringify({ conversationId: conversation.id, content, stream: true }),
+          signal: controller.signal,
         });
-        const data = (await response.json()) as {
-          userMessage?: MessageView;
-          reply?: MessageView;
-          notice?: string | null;
-          error?: string;
-        };
-        if (!response.ok || !data.reply || !data.userMessage) {
+        if (!response.ok || !response.body) {
+          const data = (await response.json().catch(() => ({}))) as { error?: string; userMessageId?: number };
+          if (typeof data.userMessageId === "number") savedUserId = data.userMessageId;
           throw new Error(data.error ?? "The engine didn't answer.");
         }
-        setMessages((current) => [
-          ...current.filter((message) => message.id !== tempId),
-          { ...data.userMessage!, pending: false },
-          data.reply!,
-        ]);
-        if (data.notice) setNotice(data.notice);
-        if (voiceRef.current) speak(data.reply.content);
+
+        for await (const event of readServerEvents(response.body)) {
+          const data = JSON.parse(event.data) as {
+            userMessage?: MessageView;
+            text?: string;
+            reply?: MessageView;
+            notice?: string | null;
+            error?: string;
+            userMessageId?: number;
+          };
+          if (event.event === "user" && data.userMessage) {
+            const saved = data.userMessage;
+            savedUserId = saved.id;
+            setMessages((current) => current.map((message) => (message.id === tempId ? saved : message)));
+          } else if (event.event === "delta" && data.text) {
+            replyText += data.text;
+            const growing: ChatMessage = {
+              id: replyTempId,
+              role: "assistant",
+              content: replyText,
+              engine: "",
+              createdAt: new Date().toISOString(),
+              pending: true,
+            };
+            setMessages((current) =>
+              current.some((message) => message.id === replyTempId)
+                ? current.map((message) => (message.id === replyTempId ? growing : message))
+                : [...current, growing],
+            );
+          } else if (event.event === "done" && data.reply) {
+            const reply = data.reply;
+            finished = true;
+            setMessages((current) => [...current.filter((message) => message.id !== replyTempId), reply]);
+            if (data.notice) setNotice(data.notice);
+            if (voiceRef.current) speak(reply.content);
+          } else if (event.event === "error") {
+            if (typeof data.userMessageId === "number") savedUserId = data.userMessageId;
+            throw new Error(data.error ?? "The engine didn't answer.");
+          }
+        }
+        if (!finished) throw new Error("The connection closed before the reply finished.");
         router.refresh();
       } catch (err) {
+        const stopped = controller.signal.aborted;
+        // Stop the caret blinking on whatever is on screen while we check.
         setMessages((current) =>
           current.map((message) =>
-            message.id === tempId ? { ...message, pending: false, failed: true } : message,
+            message.id === tempId || message.id === replyTempId ? { ...message, pending: false } : message,
           ),
         );
-        setError(err instanceof Error ? err.message : "Something went wrong.");
-        setInput(content);
+        // Ask the server what it kept. After Stop with partial text, wait
+        // for that partial reply to be saved.
+        const stored = await reconcile(stopped && replyText && savedUserId !== null ? savedUserId : undefined);
+        const userMessageStored =
+          savedUserId !== null ||
+          Boolean(stored?.some((message) => message.role === "user" && message.id > 0 && message.content === content && message.id > lastKnownId(initialMessages)));
+        if (!stopped) setError(err instanceof Error ? err.message : "Something went wrong.");
+        if (userMessageStored) {
+          // The message is in the transcript already; do not offer it for resending.
+          router.refresh();
+        } else {
+          if (!stored) {
+            setMessages((current) =>
+              current.map((message) => (message.id === tempId ? { ...message, failed: true } : message)),
+            );
+          }
+          setInput(content);
+        }
       } finally {
+        abortRef.current = null;
         setSending(false);
         textareaRef.current?.focus();
       }
     },
-    [conversation.id, router, sending, speak],
+    [conversation.id, initialMessages, reconcile, router, sending, speak],
   );
+
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (!initialPrompt || autoSent.current) return;
@@ -267,6 +368,8 @@ export function ChatView({
   }
 
   const showStarters = messages.length <= 1 && !sending;
+  // The typing dots show only until the first token; after that the growing bubble takes over.
+  const replyStarted = messages.some((message) => message.pending && message.role !== "user");
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -327,7 +430,7 @@ export function ChatView({
             />
           ))}
 
-          {sending ? (
+          {sending && !replyStarted ? (
             <div className="animate-fade flex gap-2.5">
               <Avatar bot={bot} size={34} glow={false} />
               <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-line/80 bg-panel/70 px-4 py-3">
@@ -400,15 +503,27 @@ export function ChatView({
               placeholder={`Message ${bot.name}…`}
               className="max-h-[10.5rem] min-h-[38px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-white placeholder:text-muted/60 focus:outline-none"
             />
-            <button
-              type="button"
-              onClick={() => void send(input)}
-              disabled={sending || input.trim().length === 0}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-lime text-ink transition hover:bg-lime-soft disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-muted"
-              aria-label="Send message"
-            >
-              <SendIcon width={17} height={17} />
-            </button>
+            {sending ? (
+              <button
+                type="button"
+                onClick={stop}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-white/[0.06] text-white transition hover:border-red-300/50 hover:text-red-200"
+                aria-label="Stop the reply"
+                title="Stop — keeps what has arrived so far"
+              >
+                <StopIcon width={17} height={17} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void send(input)}
+                disabled={input.trim().length === 0}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-lime text-ink transition hover:bg-lime-soft disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-muted"
+                aria-label="Send message"
+              >
+                <SendIcon width={17} height={17} />
+              </button>
+            )}
           </div>
           <p className="mt-2 flex items-center justify-between px-1 text-[10px] text-muted/70">
             <span>Enter to send · Shift + Enter for a new line</span>

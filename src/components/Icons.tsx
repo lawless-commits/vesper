@@ -159,3 +159,9 @@ export const VolumeOffIcon = (props: IconProps) => (
     <path d="m16 9.5 5 5M21 9.5l-5 5" />
   </svg>
 );
+
+export const StopIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" stroke="none" />
+  </svg>
+);
