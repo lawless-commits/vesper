@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages } from "@/db/schema";
 import { listConversations } from "@/lib/data";
@@ -31,20 +31,19 @@ export async function POST(request: Request) {
 
   const reuseEmpty = body.reuseEmpty === true;
   if (reuseEmpty) {
-    const existing = await db
-      .select()
+    // One query: this bot's oldest thread that has at most one message
+    // (nothing, or just the greeting).
+    const reusable = await db
+      .select({ conversation: conversations })
       .from(conversations)
+      .leftJoin(messages, eq(messages.conversationId, conversations.id))
       .where(eq(conversations.botId, botId))
-      .orderBy(conversations.id);
-    for (const conversation of existing) {
-      const count = await db
-        .select({ id: messages.id })
-        .from(messages)
-        .where(eq(messages.conversationId, conversation.id))
-        .limit(2);
-      if (count.length <= 1) {
-        return Response.json({ conversation, created: false });
-      }
+      .groupBy(conversations.id)
+      .having(sql`count(${messages.id}) <= 1`)
+      .orderBy(conversations.id)
+      .limit(1);
+    if (reusable[0]) {
+      return Response.json({ conversation: reusable[0].conversation, created: false });
     }
   }
 
