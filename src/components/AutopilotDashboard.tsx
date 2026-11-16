@@ -644,7 +644,10 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
                 <h2 className="text-sm font-semibold text-white">Rails that always apply</h2>
               </div>
               <ul className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-muted">
-                <li>· Quiet hours 01:00–07:00 local — no autonomous messages.</li>
+                <li>
+                  · Quiet hours 01:00–07:00 ({snapshot.timezone}) — no autonomous messages. Change the timezone
+                  in Runtime.
+                </li>
                 <li>· Per-bot daily cap and a minimum cadence of 5 minutes.</li>
                 <li>· DMs can require approval before they reach your chat.</li>
                 <li>· Everything is logged in the activity feed, nothing is deleted silently.</li>

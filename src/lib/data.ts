@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages, runtimeSettings } from "@/db/schema";
+import { safeTimeZone } from "@/lib/time";
 import type { BotView, ConversationView, MessageView, RuntimeView } from "@/lib/types";
 
 type BotRow = typeof bots.$inferSelect;
@@ -422,6 +423,7 @@ export async function getRuntimeConfig(): Promise<RuntimeConfig> {
     apiKeySource: envKey ? "env" : storedKey ? "stored" : "none",
     temperature: row?.temperature ?? 0.8,
     userName: row?.userName ?? "You",
+    timezone: safeTimeZone(row?.timezone),
   };
 }
 

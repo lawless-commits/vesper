@@ -75,6 +75,8 @@ export const runtimeSettings = pgTable("runtime_settings", {
   apiKey: text("api_key").notNull().default(""),
   temperature: real("temperature").notNull().default(0.8),
   userName: text("user_name").notNull().default("You"),
+  // IANA timezone used for autopilot quiet hours and the daily cap window.
+  timezone: text("timezone").notNull().default("UTC"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

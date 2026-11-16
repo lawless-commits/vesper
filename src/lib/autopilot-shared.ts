@@ -60,4 +60,6 @@ export type AutopilotSnapshot = {
   runs: RunView[];
   tasks: TaskView[];
   stats: AutopilotStats;
+  /** Timezone that quiet hours and "actions today" are measured in. */
+  timezone: string;
 };

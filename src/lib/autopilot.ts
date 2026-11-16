@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { getRuntime, toBotView } from "@/lib/data";
 import { generateReply } from "@/lib/runtime";
+import { isQuietHour, startOfLocalDay } from "@/lib/time";
 import type { BotView } from "@/lib/types";
 
 import {
@@ -126,11 +127,6 @@ export function composeTask(bot: BotView) {
     { title: `Close the loop on ${other}`, detail: `${bot.name} noticed this has been open for a while and would like it done before it becomes furniture.` },
   ];
   return pick(`${bot.id}-${topic}-${Date.now() % 7}`, options);
-}
-
-function isQuietHour(date: Date) {
-  const hour = date.getHours();
-  return hour >= 1 && hour < 7;
 }
 
 function withinDailyLimit(runsToday: number, limit: number) {
@@ -323,9 +319,9 @@ export async function listTasks(): Promise<TaskView[]> {
   }));
 }
 
-async function countRunsToday(botId: number) {
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
+/** Actions this bot has taken since local midnight in the configured timezone. */
+async function countRunsToday(botId: number, now: Date, timeZone: string) {
+  const midnight = startOfLocalDay(now, timeZone);
   const rows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(automationRuns)
@@ -358,7 +354,8 @@ export type RunOutcome = {
 
 /**
  * Execute one autonomous cycle for a single bot.
- * Guardrails: enabled flag, cadence, quiet hours (01:00-07:00 local) and a daily cap.
+ * Guardrails: enabled flag, cadence, quiet hours (01:00-07:00) and a daily cap.
+ * Quiet hours and the daily window use the timezone from Runtime settings.
  * Safe to call concurrently: the cadence check is an atomic claim (see claimSlot).
  */
 export async function runBotCycle(input: {
@@ -390,9 +387,12 @@ export async function runBotCycle(input: {
   });
 
   if (!automation.enabled && !input.force) return core("Autopilot is off for this bot.");
-  if (!input.force && isQuietHour(now)) return core("Quiet hours — nothing sent between 01:00 and 07:00.");
+  const { timezone } = await getRuntime();
+  if (!input.force && isQuietHour(now, timezone)) {
+    return core(`Quiet hours — nothing sent between 01:00 and 07:00 (${timezone}).`);
+  }
 
-  const runsToday = await countRunsToday(bot.id);
+  const runsToday = await countRunsToday(bot.id, now, timezone);
   if (!withinDailyLimit(runsToday, automation.dailyLimit)) {
     return core(`Daily limit of ${automation.dailyLimit} actions reached.`);
   }
@@ -635,9 +635,13 @@ export async function addTask(botId: number, title: string, detail = "") {
 
 export async function autopilotSnapshot(): Promise<AutopilotSnapshot> {
   await ensureAutomations();
-  const [automations, runs, tasks] = await Promise.all([listAutomations(), listRuns(40), listTasks()]);
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
+  const [automations, runs, tasks, runtime] = await Promise.all([
+    listAutomations(),
+    listRuns(40),
+    listTasks(),
+    getRuntime(),
+  ]);
+  const midnight = startOfLocalDay(new Date(), runtime.timezone);
   const todayRows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(automationRuns)
@@ -655,6 +659,7 @@ export async function autopilotSnapshot(): Promise<AutopilotSnapshot> {
       pending,
       openTasks,
     },
+    timezone: runtime.timezone,
   };
 }
 

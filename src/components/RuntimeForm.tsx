@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { BoltIcon, CheckIcon, CloseIcon, ShieldIcon, SparkIcon } from "@/components/Icons";
 import type { RuntimeView } from "@/lib/types";
 
@@ -40,7 +40,20 @@ const LABEL = "mb-1.5 block text-[11px] font-semibold tracking-[0.14em] text-mut
 
 const MODELS = ["llama3.2", "qwen2.5", "mistral", "gemma2", "phi3", "llama3.1:8b"];
 
+// The browser's timezone is only known on the client, so read it through
+// useSyncExternalStore: the server render and hydration see null.
+const noopSubscribe = () => () => undefined;
+function readBrowserTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
 export function RuntimeForm({ initial }: { initial: RuntimeView }) {
+  const browserTimeZone = useSyncExternalStore(noopSubscribe, readBrowserTimeZone, () => null);
+  const [timezone, setTimezone] = useState(initial.timezone);
   const [provider, setProvider] = useState(initial.provider);
   const [baseUrl, setBaseUrl] = useState(initial.baseUrl);
   const [model, setModel] = useState(initial.model);
@@ -64,6 +77,7 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
     model,
     temperature,
     userName,
+    timezone: timezone.trim() || "UTC",
     ...(apiKey.trim() ? { apiKey: apiKey.trim() } : clearApiKey ? { clearApiKey: true } : {}),
   };
   const keyFromEnv = apiKeySource === "env";
@@ -83,6 +97,7 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
       if (!response.ok || !data.runtime) throw new Error(data.error ?? "Could not save runtime settings");
       setBaseUrl(data.runtime.baseUrl);
       setModel(data.runtime.model);
+      setTimezone(data.runtime.timezone);
       setHasApiKey(data.runtime.hasApiKey);
       setApiKeySource(data.runtime.apiKeySource);
       setApiKey("");
@@ -295,6 +310,35 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
               className="mt-3 w-full cursor-pointer accent-[#c9f954]"
             />
             <p className="mt-1 text-[10px] text-muted/70">Used unless a bot defines its own temperature.</p>
+          </div>
+          <div className="sm:col-span-2">
+            <label className={LABEL} htmlFor="timezone">
+              Your timezone <span className="text-muted/60 normal-case">for autopilot quiet hours and the daily cap</span>
+            </label>
+            <input
+              id="timezone"
+              className={`${FIELD} font-mono text-[12px]`}
+              value={timezone}
+              onChange={(event) => setTimezone(event.target.value)}
+              placeholder="Africa/Johannesburg"
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] text-muted/70">
+              <span>
+                Bots stay quiet from 01:00 to 07:00 in this timezone, and &ldquo;actions today&rdquo; resets at its
+                midnight. Use an IANA name.
+              </span>
+              {browserTimeZone && browserTimeZone !== timezone.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => setTimezone(browserTimeZone)}
+                  className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-white transition hover:border-lime/40 hover:text-lime"
+                >
+                  Use this browser&apos;s: {browserTimeZone}
+                </button>
+              ) : null}
+            </p>
           </div>
         </div>
       </section>

@@ -55,4 +55,6 @@ export type RuntimeView = {
   apiKeySource: "env" | "stored" | "none";
   temperature: number;
   userName: string;
+  /** IANA timezone for autopilot quiet hours and the daily cap, e.g. "Africa/Johannesburg". */
+  timezone: string;
 };

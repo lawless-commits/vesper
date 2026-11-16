@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { runtimeSettings } from "@/db/schema";
 import { ensureSeeded, getRuntime } from "@/lib/data";
+import { badRequest } from "@/lib/http";
+import { isValidTimeZone } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,12 @@ export async function PUT(request: Request) {
     ? Math.min(1.5, Math.max(0, temperatureRaw))
     : 0.8;
 
+  // Timezone is optional; when present it must be a real IANA name.
+  const timezoneRaw = typeof body.timezone === "string" ? body.timezone.trim() : undefined;
+  if (timezoneRaw !== undefined && !isValidTimeZone(timezoneRaw)) {
+    return badRequest(`Unknown timezone "${timezoneRaw.slice(0, 64)}". Use an IANA name such as Africa/Johannesburg.`);
+  }
+
   // The key is write-only: an empty or missing apiKey keeps whatever is
   // stored, and only an explicit clearApiKey: true removes it.
   const newApiKey = typeof body.apiKey === "string" ? body.apiKey.trim().slice(0, 300) : "";
@@ -39,6 +47,7 @@ export async function PUT(request: Request) {
     ...apiKeyChange,
     temperature,
     userName: String(body.userName ?? "").trim().slice(0, 40) || "You",
+    ...(timezoneRaw !== undefined ? { timezone: timezoneRaw } : {}),
     updatedAt: new Date(),
   };
 
