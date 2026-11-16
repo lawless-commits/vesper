@@ -5,6 +5,7 @@ import { ensureSeeded, toBotView } from "@/lib/data";
 import { badRequest, parseId } from "@/lib/http";
 import { draftPersona, suggestStarters } from "@/lib/persona";
 import { handleify } from "@/lib/utils";
+import { sanitizeAvatar } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,6 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(number)) return fallback;
   return Math.min(max, Math.max(min, number));
-}
-
-function avatar(value: unknown) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  if (
-    raw.startsWith("/") ||
-    raw.startsWith("https://") ||
-    raw.startsWith("http://") ||
-    raw.startsWith("data:image/") ||
-    raw.startsWith("preset:")
-  ) {
-    return raw.slice(0, 2000);
-  }
-  return null;
 }
 
 export async function GET() {
@@ -83,7 +69,7 @@ export async function POST(request: Request) {
     persona: persona || draftPersona(personaInput),
     greeting: greeting || `Hi, I'm ${name}. ${tagline || "Tell me what's on your mind."}`,
     starters: starters.length ? starters : suggestStarters(personaInput),
-    avatarUrl: avatar(body.avatarUrl),
+    avatarUrl: sanitizeAvatar(body.avatarUrl),
     avatarSeed: String(body.avatarSeed ?? "") || handle,
     accent: /^#[0-9a-fA-F]{6}$/.test(String(body.accent ?? "")) ? String(body.accent) : "#c9f954",
     tags,
@@ -130,7 +116,7 @@ export async function PATCH(request: Request) {
       persona: body.persona === undefined ? current.persona : String(body.persona).slice(0, 4000),
       greeting: body.greeting === undefined ? current.greeting : String(body.greeting).slice(0, 400),
       starters: body.starters === undefined ? current.starters : stringArray(body.starters, 4),
-      avatarUrl: body.avatarUrl === undefined ? current.avatarUrl : avatar(body.avatarUrl),
+      avatarUrl: body.avatarUrl === undefined ? current.avatarUrl : sanitizeAvatar(body.avatarUrl),
       avatarSeed: body.avatarSeed === undefined ? current.avatarSeed : String(body.avatarSeed).slice(0, 60),
       accent: /^#[0-9a-fA-F]{6}$/.test(String(body.accent ?? "")) ? String(body.accent) : current.accent,
       tags,
