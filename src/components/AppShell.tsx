@@ -79,13 +79,13 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // The mobile menu remembers which page it was opened on. Navigating changes
+  // pathname, so the menu reads as closed without an effect resetting state.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const open = openedOn === pathname;
+  const setOpen = (next: boolean) => setOpenedOn(next ? pathname : null);
   const [bots, setBots] = useState<BotView[]>([]);
   const [runtime, setRuntime] = useState<RuntimeView | null>(null);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;

@@ -21,6 +21,7 @@ import {
   type AutopilotSnapshot,
   type RunView,
 } from "@/lib/autopilot-shared";
+import { useLocalFlag } from "@/lib/useLocalFlag";
 import { timeAgo } from "@/lib/utils";
 
 const CADENCES = [
@@ -52,7 +53,7 @@ function StatusPill({ status }: { status: string }) {
 export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState<AutopilotSnapshot>(initial);
-  const [live, setLive] = useState(false);
+  const [live, setLive] = useLocalFlag("vesper:autopilot-live");
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,20 +64,7 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
 
   useEffect(() => {
     liveRef.current = live;
-    try {
-      window.localStorage.setItem("vesper:autopilot-live", live ? "on" : "off");
-    } catch {
-      // ignore
-    }
   }, [live]);
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem("vesper:autopilot-live") === "on") setLive(true);
-    } catch {
-      // ignore
-    }
-  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -265,7 +253,7 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setLive((value) => !value)}
+              onClick={() => setLive(!live)}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 live ? "bg-white text-ink hover:bg-white/90" : "bg-lime text-ink hover:bg-lime-soft"
               }`}

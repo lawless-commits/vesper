@@ -70,7 +70,7 @@ export function DiscoverClient({ bots }: { bots: BotView[] }) {
       {filtered.length === 0 ? (
         <div className="mt-10 rounded-2xl border border-line/70 bg-panel/40 p-8 text-center">
           <p className="text-sm font-medium text-white">Nothing matches “{query || tag}” yet.</p>
-          <p className="mt-1 text-xs text-muted">Try a broader search, or build exactly the bot you're looking for.</p>
+          <p className="mt-1 text-xs text-muted">Try a broader search, or build exactly the bot you&apos;re looking for.</p>
         </div>
       ) : null}
     </div>

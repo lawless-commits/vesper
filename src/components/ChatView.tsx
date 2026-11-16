@@ -16,6 +16,7 @@ import {
   VolumeOffIcon,
 } from "@/components/Icons";
 import { readServerEvents } from "@/lib/sse";
+import { useLocalFlag } from "@/lib/useLocalFlag";
 import type { ConversationView, MessageView } from "@/lib/types";
 
 type ChatMessage = MessageView & { pending?: boolean; failed?: boolean };
@@ -136,18 +137,13 @@ export function ChatView({
   const autoSent = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const voiceRef = useRef(false);
-  const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceOn, setVoiceOn] = useLocalFlag("vesper:voice");
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("vesper:voice");
-      if (stored === "on") {
-        voiceRef.current = true;
-        setVoiceOn(true);
-      }
-    } catch {
-      // ignore storage restrictions
-    }
+    voiceRef.current = voiceOn;
+  }, [voiceOn]);
+
+  useEffect(() => {
     return () => {
       try {
         window.speechSynthesis?.cancel();
@@ -179,11 +175,6 @@ export function ChatView({
     const next = !voiceOn;
     setVoiceOn(next);
     voiceRef.current = next;
-    try {
-      window.localStorage.setItem("vesper:voice", next ? "on" : "off");
-    } catch {
-      // ignore
-    }
     if (!next) window.speechSynthesis?.cancel();
     else speak(`Voice on. I'm ${bot.name}. ${bot.tagline || ""}`);
   }
