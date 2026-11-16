@@ -173,7 +173,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <BoltIcon width={13} height={13} className="ml-auto text-lime" />
         </div>
         <p className="mt-1.5 truncate text-[11px] text-muted">{providerLabel}</p>
-        <p className="mt-2 text-[10px] text-muted/60">Runs on your machine. Nothing leaves it.</p>
+        <p className="mt-2 text-[10px] text-muted/60">Runs on your machine. Prompts go only to the model server you set.</p>
       </Link>
     </div>
   );
