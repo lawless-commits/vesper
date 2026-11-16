@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages, runtimeSettings } from "@/db/schema";
 import type { BotView, ConversationView, MessageView, RuntimeView } from "@/lib/types";
@@ -310,27 +310,37 @@ export async function listConversations(botId?: number): Promise<ConversationVie
     .where(botId ? eq(conversations.botId, botId) : undefined)
     .orderBy(desc(conversations.updatedAt));
 
-  const allMessages = await db
-    .select({
-      conversationId: messages.conversationId,
-      content: messages.content,
-      role: messages.role,
-      createdAt: messages.createdAt,
-    })
-    .from(messages)
-    .orderBy(desc(messages.createdAt));
+  if (!rows.length) return [];
 
-  const lastByConversation = new Map<number, string>();
-  const countByConversation = new Map<number, number>();
-  for (const message of allMessages) {
-    if (!lastByConversation.has(message.conversationId)) {
-      lastByConversation.set(message.conversationId, message.content);
-    }
-    countByConversation.set(
-      message.conversationId,
-      (countByConversation.get(message.conversationId) ?? 0) + 1,
-    );
-  }
+  // Let Postgres aggregate instead of loading every message into JS.
+  // With a botId, only that bot's conversations are scanned; without one,
+  // every conversation is in `rows` already, so no extra filter is needed.
+  const scope = botId
+    ? inArray(
+        messages.conversationId,
+        db.select({ id: conversations.id }).from(conversations).where(eq(conversations.botId, botId)),
+      )
+    : undefined;
+
+  const [counts, lasts] = await Promise.all([
+    db
+      .select({ conversationId: messages.conversationId, count: sql<number>`count(*)::int` })
+      .from(messages)
+      .where(scope)
+      .groupBy(messages.conversationId),
+    // Newest message per conversation; served by the (conversation_id, id) index.
+    db
+      .selectDistinctOn([messages.conversationId], {
+        conversationId: messages.conversationId,
+        content: messages.content,
+      })
+      .from(messages)
+      .where(scope)
+      .orderBy(messages.conversationId, desc(messages.id)),
+  ]);
+
+  const countByConversation = new Map(counts.map((row) => [row.conversationId, row.count]));
+  const lastByConversation = new Map(lasts.map((row) => [row.conversationId, row.content]));
 
   return rows.map(({ conversation, bot }) => ({
     id: conversation.id,
