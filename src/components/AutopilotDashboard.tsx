@@ -457,9 +457,9 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
                     onClick={() => void updateAutomation(item.botId, { useModel: !item.useModel })}
                     className="flex w-full items-center justify-between rounded-lg border border-line bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-muted transition hover:text-white"
                   >
-                    <span>Draft DMs with my local model</span>
+                    <span>Write with my local model</span>
                     <span className={item.useModel ? "text-lime" : "text-muted/60"}>
-                      {item.useModel ? "model" : "built-in"}
+                      {item.useModel ? "model" : "templates"}
                     </span>
                   </button>
                 </div>
@@ -502,6 +502,20 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
                     <span className="text-[11px] font-medium text-white/90">{run.botName}</span>
                     <span className="text-[9px] tracking-wider text-muted uppercase">{kindMeta(run.kind).label}</span>
                     <StatusPill status={run.status} />
+                    {run.source ? (
+                      <span
+                        className="rounded-full border border-line px-1.5 py-0.5 font-mono text-[9px] text-muted"
+                        title={
+                          run.source === "model"
+                            ? "Written by your local model"
+                            : run.source === "mixed"
+                              ? "Opener written by your model, reply from a template"
+                              : "Built from Vesper's templates"
+                        }
+                      >
+                        source: {run.source}
+                      </span>
+                    ) : null}
                     <span className="ml-auto text-[10px] text-muted/70">{timeAgo(run.createdAt)}</span>
                   </div>
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/75">{run.content}</p>

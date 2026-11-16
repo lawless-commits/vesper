@@ -34,6 +34,8 @@ export type RunView = {
   partnerContent: string | null;
   partnerName: string | null;
   conversationId: number | null;
+  /** Who wrote the text: "model", "template", "mixed" (relay with one side each) or null for older runs. */
+  source: string | null;
   createdAt: string;
 };
 

@@ -297,6 +297,7 @@ export async function listRuns(limit = 40): Promise<RunView[]> {
     partnerContent: run.partnerContent,
     partnerName: run.partnerBotId ? partnerNames.get(run.partnerBotId) ?? null : null,
     conversationId: run.conversationId,
+    source: typeof run.meta?.source === "string" ? run.meta.source : null,
     createdAt: run.createdAt.toISOString(),
   }));
 }
@@ -425,64 +426,105 @@ async function performCycle(input: {
   const kind = actions[(hash(`bot-${bot.id}`) + runsToday) % actions.length] as ActionKind;
   const seed = `${bot.id}-${runsToday}-${now.toISOString().slice(0, 13)}`;
 
+  const runtime = await getRuntime();
+  const userName = runtime.userName || "you";
+  // "Write with my model" applies to every action. Each piece of text falls
+  // back to its template if the model is off, unreachable or returns nothing,
+  // and every run records which one produced it in meta.source.
+  const useModel = automation.useModel && runtime.provider !== "demo";
+  const write = async (author: BotView, instruction: string, maxLength: number, template: string) => {
+    const written = useModel ? await modelText(author, instruction, maxLength) : null;
+    return written ? { text: written, source: "model" as const } : { text: template, source: "template" as const };
+  };
+
+  const journal = async () => {
+    const post = await write(
+      botView,
+      `(Autonomous journal entry. Nobody has messaged you. Write one short public post, two sentences at most, in your own voice about ${topicOf(botView)} or ${secondTopicOf(botView)}. No greeting, no hashtags, no quotation marks.)`,
+      JOURNAL_MAX,
+      composeJournal(botView, seed),
+    );
+    await db
+      .insert(automationRuns)
+      .values({ botId: bot.id, kind: "journal", status: "sent", content: post.text, meta: { source: post.source } });
+  };
+
   if (kind === "journal") {
-    const content = composeJournal(botView, seed);
-    await db.insert(automationRuns).values({ botId: bot.id, kind, status: "sent", content });
+    await journal();
     return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: "Published a transmission." };
   }
 
   if (kind === "relay") {
     const others = await db.select().from(bots).where(sql`${bots.id} <> ${bot.id}`);
     if (!others.length) {
-      const content = composeJournal(botView, seed);
-      await db.insert(automationRuns).values({ botId: bot.id, kind: "journal", status: "sent", content });
-        return { botId: bot.id, botName: bot.name, kind: "journal", status: "sent", summary: "Only one bot in the roster, posted a transmission instead." };
+      await journal();
+      return { botId: bot.id, botName: bot.name, kind: "journal", status: "sent", summary: "Only one bot in the roster, posted a transmission instead." };
     }
     const partner = others[hash(seed) % others.length];
-    const { opener, reply, topic } = composeRelay(botView, toBotView(partner));
+    const partnerView = toBotView(partner);
+    const template = composeRelay(botView, partnerView);
+    // Two model calls: the opener, then the partner's answer to that opener.
+    const opener = await write(
+      botView,
+      `(Autonomous relay. You are starting a short exchange with ${partner.name}, another companion. Address ${partner.name} by name and say one or two sentences about ${template.topic}, in your own voice. No quotation marks.)`,
+      RELAY_MAX,
+      template.opener,
+    );
+    const reply =
+      opener.source === "model"
+        ? await write(
+            partnerView,
+            `(Autonomous relay. ${bot.name}, another companion, just said to you: "${opener.text}" Answer ${bot.name} in one or two sentences, in your own voice. No quotation marks.)`,
+            RELAY_MAX,
+            template.reply,
+          )
+        : { text: template.reply, source: "template" as const };
+    // "model" only when both sides came from the model.
+    const source = opener.source === "model" && reply.source === "model" ? "model" : opener.source === "model" ? "mixed" : "template";
     await db.insert(automationRuns).values({
       botId: bot.id,
       kind,
       status: "sent",
-      content: opener,
+      content: opener.text,
       partnerBotId: partner.id,
-      partnerContent: reply,
-      meta: { topic },
+      partnerContent: reply.text,
+      meta: { topic: template.topic, source },
     });
     return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: `Relayed with ${partner.name}.` };
   }
 
   if (kind === "task") {
-    const task = composeTask(botView);
+    const template = composeTask(botView);
+    const title = await write(
+      botView,
+      `(Autonomous task. Suggest one small, concrete follow-up task for ${userName} about ${topicOf(botView)} or ${secondTopicOf(botView)}. Answer with the task title only: one line, under twelve words, starting with a verb, no quotation marks and no full stop.)`,
+      TASK_TITLE_MAX,
+      template.title,
+    );
+    const detail = title.source === "model" ? `${bot.name} added this on its own.` : template.detail;
     const created = await db
       .insert(automationTasks)
-      .values({ botId: bot.id, title: task.title, detail: task.detail })
+      .values({ botId: bot.id, title: title.text, detail })
       .returning({ id: automationTasks.id });
     await db.insert(automationRuns).values({
       botId: bot.id,
       kind,
       status: "sent",
-      content: task.title,
-      meta: { taskId: created[0]?.id ?? 0 },
+      content: title.text,
+      meta: { taskId: created[0]?.id ?? 0, source: title.source },
     });
-    return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: `Added task: ${task.title}` };
+    return { botId: bot.id, botName: bot.name, kind, status: "sent", summary: `Added task: ${title.text}` };
   }
 
   // kind === "dm"
-  const runtime = await getRuntime();
-  const userName = runtime.userName || "you";
   const conversation = await ensureBotConversation(botView);
-  let content: string;
-  if (automation.useModel && runtime.provider !== "demo") {
-    const result = await generateReply({
-      bot: botView,
-      history: [],
-      userMessage: `(Autonomous check-in. Nobody has messaged you. Reach out to ${userName} yourself about ${topicOf(botView)}, in one short message.)`,
-    });
-    content = result.content;
-  } else {
-    content = composeDm(botView, userName, seed);
-  }
+  const dm = await write(
+    botView,
+    `(Autonomous check-in. Nobody has messaged you. Reach out to ${userName} yourself about ${topicOf(botView)}, in one short message.)`,
+    DM_MAX,
+    composeDm(botView, userName, seed),
+  );
+  const content = dm.text;
 
   const pending = automation.requireApproval;
   if (!pending) {
@@ -504,6 +546,7 @@ async function performCycle(input: {
     status: pending ? "pending" : "sent",
     content,
     conversationId: conversation.id,
+    meta: { source: dm.source },
   });
   return {
     botId: bot.id,
@@ -512,6 +555,39 @@ async function performCycle(input: {
     status: pending ? "pending" : "sent",
     summary: pending ? "Draft message waiting for your approval." : "Sent you a message.",
   };
+}
+
+// Hard caps on model-written autopilot text, in characters.
+const JOURNAL_MAX = 420;
+const RELAY_MAX = 420;
+const TASK_TITLE_MAX = 120;
+const DM_MAX = 600;
+
+/** Tidy model output: strip wrapping quotes and cut at a sentence end within the cap. */
+export function trimModelText(raw: string, maxLength: number) {
+  let text = raw.replace(/\s+/g, " ").trim().replace(/^["“”']+|["“”']+$/g, "").trim();
+  if (text.length <= maxLength) return text;
+  text = text.slice(0, maxLength);
+  const sentenceEnd = Math.max(text.lastIndexOf(". "), text.lastIndexOf("! "), text.lastIndexOf("? "));
+  if (sentenceEnd > maxLength * 0.5) return text.slice(0, sentenceEnd + 1);
+  return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+/**
+ * Ask the configured model for a short piece of in-character text.
+ * Returns null whenever the model did not actually write it (unreachable,
+ * timed out, empty), so the caller uses its template instead.
+ */
+async function modelText(bot: BotView, instruction: string, maxLength: number): Promise<string | null> {
+  try {
+    const result = await generateReply({ bot, history: [], userMessage: instruction });
+    // generateReply answers with the built-in engine when the model fails.
+    if (result.engine === "vesper-local" || result.notice) return null;
+    const text = trimModelText(result.content, maxLength);
+    return text || null;
+  } catch {
+    return null;
+  }
 }
 
 function truncateTitle(text: string) {
