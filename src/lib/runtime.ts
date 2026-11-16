@@ -1,14 +1,12 @@
-import { getRuntime } from "@/lib/data";
+import { getRuntimeConfig, type RuntimeConfig } from "@/lib/data";
 import { buildSystemPrompt, generateDemoReply, type ChatTurn } from "@/lib/persona";
-import type { BotView, RuntimeView } from "@/lib/types";
+import type { BotView } from "@/lib/types";
 
 export type ReplyResult = {
   content: string;
   engine: string;
   notice?: string;
 };
-
-export type RuntimeConfig = RuntimeView;
 
 function normalizeBase(baseUrl: string) {
   return (baseUrl || "").trim().replace(/\/+$/, "");
@@ -109,7 +107,7 @@ export async function generateReply(input: {
   userMessage: string;
 }): Promise<ReplyResult> {
   const { bot, history, userMessage } = input;
-  const runtime = await getRuntime();
+  const runtime = await getRuntimeConfig();
   const userName = runtime.userName || "you";
 
   if (runtime.provider === "demo") {

@@ -44,7 +44,12 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
   const [provider, setProvider] = useState(initial.provider);
   const [baseUrl, setBaseUrl] = useState(initial.baseUrl);
   const [model, setModel] = useState(initial.model);
-  const [apiKey, setApiKey] = useState(initial.apiKey);
+  // The saved key is never sent to the browser. This field only holds a new
+  // key the user is typing; blank means "keep what is stored".
+  const [apiKey, setApiKey] = useState("");
+  const [hasApiKey, setHasApiKey] = useState(initial.hasApiKey);
+  const [apiKeySource, setApiKeySource] = useState(initial.apiKeySource);
+  const [clearApiKey, setClearApiKey] = useState(false);
   const [temperature, setTemperature] = useState(initial.temperature);
   const [userName, setUserName] = useState(initial.userName);
   const [saving, setSaving] = useState(false);
@@ -53,7 +58,16 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ ok: boolean; detail: string } | null>(null);
 
-  const payload = { provider, baseUrl, model, apiKey, temperature, userName };
+  const payload = {
+    provider,
+    baseUrl,
+    model,
+    temperature,
+    userName,
+    ...(apiKey.trim() ? { apiKey: apiKey.trim() } : clearApiKey ? { clearApiKey: true } : {}),
+  };
+  const keyFromEnv = apiKeySource === "env";
+  const keySaved = hasApiKey && !clearApiKey;
 
   async function save() {
     setSaving(true);
@@ -69,6 +83,10 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
       if (!response.ok || !data.runtime) throw new Error(data.error ?? "Could not save runtime settings");
       setBaseUrl(data.runtime.baseUrl);
       setModel(data.runtime.model);
+      setHasApiKey(data.runtime.hasApiKey);
+      setApiKeySource(data.runtime.apiKeySource);
+      setApiKey("");
+      setClearApiKey(false);
       setSavedAt(new Date().toLocaleTimeString());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save runtime settings");
@@ -195,10 +213,55 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
                 type="password"
                 className={`${FIELD} font-mono text-[12px]`}
                 value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                placeholder="sk-local-…"
+                onChange={(event) => {
+                  setApiKey(event.target.value);
+                  if (event.target.value) setClearApiKey(false);
+                }}
+                placeholder={
+                  keyFromEnv
+                    ? "Set by LLM_API_KEY in the environment"
+                    : keySaved
+                      ? "Key saved — leave blank to keep it"
+                      : "sk-local-…"
+                }
+                disabled={keyFromEnv}
                 autoComplete="off"
               />
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+                {keyFromEnv ? (
+                  <span>
+                    Using the key from the <span className="font-mono text-white/70">LLM_API_KEY</span> environment
+                    variable. It overrides anything saved here.
+                  </span>
+                ) : clearApiKey ? (
+                  <>
+                    <span className="text-amber-200">The saved key will be removed when you save.</span>
+                    <button
+                      type="button"
+                      onClick={() => setClearApiKey(false)}
+                      className="rounded-lg border border-line px-2 py-0.5 text-white transition hover:border-white/25"
+                    >
+                      Keep key
+                    </button>
+                  </>
+                ) : hasApiKey ? (
+                  <>
+                    <span className="text-lime">A key is saved on this machine. It is never shown again.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClearApiKey(true);
+                        setApiKey("");
+                      }}
+                      className="rounded-lg border border-line px-2 py-0.5 text-white transition hover:border-red-300/50 hover:text-red-200"
+                    >
+                      Remove key
+                    </button>
+                  </>
+                ) : (
+                  <span>No key saved.</span>
+                )}
+              </div>
             </div>
           </div>
         </section>

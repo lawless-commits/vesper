@@ -26,12 +26,17 @@ export async function PUT(request: Request) {
     ? Math.min(1.5, Math.max(0, temperatureRaw))
     : 0.8;
 
+  // The key is write-only: an empty or missing apiKey keeps whatever is
+  // stored, and only an explicit clearApiKey: true removes it.
+  const newApiKey = typeof body.apiKey === "string" ? body.apiKey.trim().slice(0, 300) : "";
+  const apiKeyChange = body.clearApiKey === true ? { apiKey: "" } : newApiKey ? { apiKey: newApiKey } : {};
+
   const values = {
     id: 1,
     provider,
     baseUrl: String(body.baseUrl ?? "").trim().slice(0, 300) || "http://127.0.0.1:11434/v1",
     model: String(body.model ?? "").trim().slice(0, 120) || "llama3.2",
-    apiKey: String(body.apiKey ?? "").slice(0, 300),
+    ...apiKeyChange,
     temperature,
     userName: String(body.userName ?? "").trim().slice(0, 40) || "You",
     updatedAt: new Date(),

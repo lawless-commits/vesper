@@ -385,28 +385,40 @@ export async function getConversation(
   };
 }
 
-export async function getRuntime(): Promise<RuntimeView> {
+/**
+ * Server-only runtime settings, including the real API key.
+ * Never return this from an API route or pass it to a client component;
+ * use getRuntime() for anything the browser can see.
+ */
+export type RuntimeConfig = Omit<RuntimeView, "hasApiKey" | "apiKeySource"> & {
+  apiKey: string;
+  apiKeySource: RuntimeView["apiKeySource"];
+};
+
+export async function getRuntimeConfig(): Promise<RuntimeConfig> {
   await ensureSeeded();
   const rows = await db.select().from(runtimeSettings).where(eq(runtimeSettings.id, 1)).limit(1);
   const row = rows[0];
-  if (!row) {
-    return {
-      provider: "demo",
-      baseUrl: "http://127.0.0.1:11434/v1",
-      model: "llama3.2",
-      apiKey: "",
-      temperature: 0.8,
-      userName: "You",
-    };
-  }
+  // LLM_API_KEY in the environment wins over the database value, so a key
+  // can be supplied without ever being stored.
+  const envKey = (process.env.LLM_API_KEY ?? "").trim();
+  const storedKey = row?.apiKey ?? "";
+  const apiKey = envKey || storedKey;
   return {
-    provider: row.provider,
-    baseUrl: row.baseUrl,
-    model: row.model,
-    apiKey: row.apiKey,
-    temperature: row.temperature,
-    userName: row.userName,
+    provider: row?.provider ?? "demo",
+    baseUrl: row?.baseUrl ?? "http://127.0.0.1:11434/v1",
+    model: row?.model ?? "llama3.2",
+    apiKey,
+    apiKeySource: envKey ? "env" : storedKey ? "stored" : "none",
+    temperature: row?.temperature ?? 0.8,
+    userName: row?.userName ?? "You",
   };
+}
+
+/** Client-safe view of the runtime settings. Contains no secrets. */
+export async function getRuntime(): Promise<RuntimeView> {
+  const { apiKey, ...rest } = await getRuntimeConfig();
+  return { ...rest, hasApiKey: Boolean(apiKey) };
 }
 
 export async function findOrCreateConversation(botId: number, botName: string) {
