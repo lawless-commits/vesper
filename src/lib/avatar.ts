@@ -112,7 +112,7 @@ function markFor(seed: string, presetId?: string | null): GlyphPresetId {
 }
 
 /**
- * Grok-style monochrome emblem avatar: near-black plate, hairline rings,
+ * Monochrome emblem avatar: near-black plate, hairline rings,
  * registration ticks and a single sharp white geometric mark.
  * Fully deterministic from the seed, so no files or uploads are needed.
  */

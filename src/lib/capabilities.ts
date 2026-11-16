@@ -89,7 +89,7 @@ export const CAPABILITIES: Capability[] = [
     title: "Visual identity",
     glyph: "✦",
     status: "live",
-    summary: "Monochrome Grok-style emblems, generated or custom.",
+    summary: "Monochrome geometric emblems, generated or custom.",
     detail:
       "Eight geometric emblem marks plus seeded variants and a per-bot accent colour. These generated emblems are deterministic SVG, so they cost nothing to store and never 404. You can also use your own image: an https:// URL (which your browser fetches from that site) or an embedded data: image. Plain http:// image URLs are not accepted.",
     where: { label: "Studio avatar picker", href: "/studio" },

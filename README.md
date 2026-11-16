@@ -189,3 +189,7 @@ drizzle/            SQL migrations
 scripts/            load-test seeding
 tests/              tests that need a database
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
