@@ -627,11 +627,13 @@ export function AutopilotDashboard({ initial }: { initial: AutopilotSnapshot }) 
 */15 * * * * curl -s -X POST \\
   http://localhost:3000/api/automation/run \\
   -H 'content-type: application/json' \\
+  -H 'x-autopilot-token: YOUR_TOKEN' \\
   -d '{"mode":"tick"}'`}
             </pre>
             <p className="mt-2 text-[10px] leading-relaxed text-muted/70">
-              Set <span className="font-mono text-white/70">AUTOPILOT_TOKEN</span> in <span className="font-mono">.env</span> to
-              require a token header on every call.
+              Set <span className="font-mono text-white/70">AUTOPILOT_TOKEN</span> in{" "}
+              <span className="font-mono">.env.local</span> to require that header from anything that isn&apos;t this
+              app&apos;s own pages. Without it, drop the header line.
             </p>
           </section>
 

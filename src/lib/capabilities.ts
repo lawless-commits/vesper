@@ -258,7 +258,7 @@ export const API_SURFACE = [
   { method: "GET/PUT", path: "/api/runtime", what: "Read or change local model settings" },
   { method: "POST", path: "/api/runtime/test", what: "Probe the server, list its models" },
   { method: "GET/PUT", path: "/api/automation", what: "Autopilot state and per-bot config" },
-  { method: "POST", path: "/api/automation/run", what: "Tick the scheduler, or force one bot" },
+  { method: "POST", path: "/api/automation/run", what: "Tick the scheduler, or force one bot. Outside the app, send x-autopilot-token when AUTOPILOT_TOKEN is set" },
   { method: "PATCH", path: "/api/automation/runs", what: "Approve or dismiss a drafted DM" },
   { method: "POST/PATCH", path: "/api/tasks", what: "Create or complete a task" },
   { method: "GET", path: "/api/health", what: "Database liveness probe" },
