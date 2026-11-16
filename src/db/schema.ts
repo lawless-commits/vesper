@@ -77,6 +77,9 @@ export const runtimeSettings = pgTable("runtime_settings", {
   userName: text("user_name").notNull().default("You"),
   // IANA timezone used for autopilot quiet hours and the daily cap window.
   timezone: text("timezone").notNull().default("UTC"),
+  // How long to wait for the model, and how long a reply may be.
+  timeoutSeconds: integer("timeout_seconds").notNull().default(90),
+  maxTokens: integer("max_tokens").notNull().default(600),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

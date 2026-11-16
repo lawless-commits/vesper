@@ -3,6 +3,7 @@ import { runtimeSettings } from "@/db/schema";
 import { ensureSeeded, getRuntime } from "@/lib/data";
 import { badRequest } from "@/lib/http";
 import { isValidTimeZone } from "@/lib/time";
+import { clampRuntimeLimit } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,11 @@ export async function PUT(request: Request) {
     temperature,
     userName: String(body.userName ?? "").trim().slice(0, 40) || "You",
     ...(timezoneRaw !== undefined ? { timezone: timezoneRaw } : {}),
+    // Optional: left unchanged when the caller does not send them.
+    ...(body.timeoutSeconds !== undefined
+      ? { timeoutSeconds: clampRuntimeLimit("timeoutSeconds", body.timeoutSeconds) }
+      : {}),
+    ...(body.maxTokens !== undefined ? { maxTokens: clampRuntimeLimit("maxTokens", body.maxTokens) } : {}),
     updatedAt: new Date(),
   };
 

@@ -54,6 +54,8 @@ function readBrowserTimeZone() {
 export function RuntimeForm({ initial }: { initial: RuntimeView }) {
   const browserTimeZone = useSyncExternalStore(noopSubscribe, readBrowserTimeZone, () => null);
   const [timezone, setTimezone] = useState(initial.timezone);
+  const [timeoutSeconds, setTimeoutSeconds] = useState(String(initial.timeoutSeconds));
+  const [maxTokens, setMaxTokens] = useState(String(initial.maxTokens));
   const [provider, setProvider] = useState(initial.provider);
   const [baseUrl, setBaseUrl] = useState(initial.baseUrl);
   const [model, setModel] = useState(initial.model);
@@ -78,6 +80,8 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
     temperature,
     userName,
     timezone: timezone.trim() || "UTC",
+    timeoutSeconds: Number(timeoutSeconds),
+    maxTokens: Number(maxTokens),
     ...(apiKey.trim() ? { apiKey: apiKey.trim() } : clearApiKey ? { clearApiKey: true } : {}),
   };
   const keyFromEnv = apiKeySource === "env";
@@ -98,6 +102,8 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
       setBaseUrl(data.runtime.baseUrl);
       setModel(data.runtime.model);
       setTimezone(data.runtime.timezone);
+      setTimeoutSeconds(String(data.runtime.timeoutSeconds));
+      setMaxTokens(String(data.runtime.maxTokens));
       setHasApiKey(data.runtime.hasApiKey);
       setApiKeySource(data.runtime.apiKeySource);
       setApiKey("");
@@ -276,6 +282,42 @@ export function RuntimeForm({ initial }: { initial: RuntimeView }) {
                 ) : (
                   <span>No key saved.</span>
                 )}
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={LABEL} htmlFor="timeout-seconds">
+                  Timeout <span className="text-muted/60 normal-case">seconds, 10–300</span>
+                </label>
+                <input
+                  id="timeout-seconds"
+                  type="number"
+                  min={10}
+                  max={300}
+                  step={5}
+                  className={`${FIELD} font-mono text-[12px]`}
+                  value={timeoutSeconds}
+                  onChange={(event) => setTimeoutSeconds(event.target.value)}
+                />
+                <p className="mt-1 text-[10px] text-muted/70">
+                  How long to wait before falling back. A model loading from disk can need a minute or more.
+                </p>
+              </div>
+              <div>
+                <label className={LABEL} htmlFor="max-tokens">
+                  Reply length <span className="text-muted/60 normal-case">max tokens, 64–4000</span>
+                </label>
+                <input
+                  id="max-tokens"
+                  type="number"
+                  min={64}
+                  max={4000}
+                  step={50}
+                  className={`${FIELD} font-mono text-[12px]`}
+                  value={maxTokens}
+                  onChange={(event) => setMaxTokens(event.target.value)}
+                />
+                <p className="mt-1 text-[10px] text-muted/70">Applied to both Ollama and OpenAI-compatible servers.</p>
               </div>
             </div>
           </div>

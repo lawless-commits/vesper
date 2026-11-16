@@ -2,7 +2,8 @@ import { autopilotSnapshot, runBotCycle, tickAutomations } from "@/lib/autopilot
 import { badRequest, isSameOrigin, parseId, secretMatches } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// A relay can make two model calls, each bounded by the runtime timeout (max 300s).
+export const maxDuration = 600;
 
 /**
  * Runs autonomy work. Callable by the UI heartbeat, by `curl`, or by cron:

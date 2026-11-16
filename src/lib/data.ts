@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bots, conversations, messages, runtimeSettings } from "@/db/schema";
 import { safeTimeZone } from "@/lib/time";
-import type { BotView, ConversationView, MessageView, RuntimeView } from "@/lib/types";
+import { clampRuntimeLimit, type BotView, type ConversationView, type MessageView, type RuntimeView } from "@/lib/types";
 
 type BotRow = typeof bots.$inferSelect;
 
@@ -424,6 +424,8 @@ export async function getRuntimeConfig(): Promise<RuntimeConfig> {
     temperature: row?.temperature ?? 0.8,
     userName: row?.userName ?? "You",
     timezone: safeTimeZone(row?.timezone),
+    timeoutSeconds: clampRuntimeLimit("timeoutSeconds", row?.timeoutSeconds),
+    maxTokens: clampRuntimeLimit("maxTokens", row?.maxTokens),
   };
 }
 

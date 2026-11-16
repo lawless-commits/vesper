@@ -7,7 +7,8 @@ import { generateReply } from "@/lib/runtime";
 import { truncate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// Must be at least the largest configurable model timeout (300s, see RUNTIME_LIMITS).
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   await ensureSeeded();

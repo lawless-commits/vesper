@@ -57,4 +57,21 @@ export type RuntimeView = {
   userName: string;
   /** IANA timezone for autopilot quiet hours and the daily cap, e.g. "Africa/Johannesburg". */
   timezone: string;
+  /** Seconds to wait for the model before falling back (10-300). */
+  timeoutSeconds: number;
+  /** Upper bound on reply length in tokens, applied to every provider (64-4000). */
+  maxTokens: number;
 };
+
+export const RUNTIME_LIMITS = {
+  timeoutSeconds: { min: 10, max: 300, fallback: 90 },
+  maxTokens: { min: 64, max: 4000, fallback: 600 },
+} as const;
+
+/** Clamp a user-supplied runtime limit into its allowed range. */
+export function clampRuntimeLimit(kind: keyof typeof RUNTIME_LIMITS, value: unknown): number {
+  const { min, max, fallback } = RUNTIME_LIMITS[kind];
+  const number = typeof value === "number" ? value : Number(value);
+  if (value === null || value === undefined || value === "" || !Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(number)));
+}

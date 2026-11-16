@@ -54,10 +54,10 @@ async function callOpenAiCompatible(
       model: config.model,
       messages: toModelMessages(system, history, userMessage),
       temperature: config.temperature,
-      max_tokens: 420,
+      max_tokens: config.maxTokens,
       stream: false,
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(config.timeoutSeconds * 1000),
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
@@ -87,9 +87,10 @@ async function callOllama(
       model: config.model,
       messages: toModelMessages(system, history, userMessage),
       stream: false,
-      options: { temperature: config.temperature },
+      // num_predict is Ollama's name for the reply token limit.
+      options: { temperature: config.temperature, num_predict: config.maxTokens },
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(config.timeoutSeconds * 1000),
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
@@ -125,13 +126,32 @@ export async function generateReply(input: {
         : await callOpenAiCompatible(runtime, system, history, userMessage);
     return { content, engine: `${runtime.provider}:${runtime.model}` };
   } catch (error) {
-    const reason = error instanceof Error ? error.message : "unknown error";
     return {
       content: generateDemoReply({ bot, history, userMessage, userName }),
       engine: "vesper-local",
-      notice: `Couldn't reach your local model (${reason}). Replied with the built-in engine.`,
+      notice: fallbackNotice(error, runtime.timeoutSeconds),
     };
   }
+}
+
+function isTimeout(error: unknown) {
+  return error instanceof Error && error.name === "TimeoutError";
+}
+
+/**
+ * Explain why the configured model was not used, distinguishing "it took too
+ * long" (raise the timeout, or the model is still loading) from "it could not
+ * be reached or returned an error".
+ */
+export function fallbackNotice(error: unknown, timeoutSeconds: number) {
+  if (isTimeout(error)) {
+    return `Your model timed out after ${timeoutSeconds}s (it may still be loading — you can raise the timeout in Runtime). Replied with the built-in engine.`;
+  }
+  const cause = error instanceof Error && error.cause instanceof Error ? error.cause : null;
+  const code = cause && "code" in cause ? String((cause as { code?: unknown }).code ?? "") : "";
+  const base = error instanceof Error ? error.message : "unknown error";
+  const reason = code ? `${base}: ${code}` : cause?.message ? `${base}: ${cause.message}` : base;
+  return `Couldn't reach your model (${reason}). Replied with the built-in engine.`;
 }
 
 export async function probeRuntime(config: Partial<RuntimeConfig>) {
