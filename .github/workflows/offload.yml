@@ -1,0 +1,174 @@
+# Runs one command sent by `gh offload` on a GitHub-hosted runner.
+# Written by `gh offload init`: https://github.com/lawless-commits/gh-offload
+#
+# gh offload pushes a snapshot of your working tree to a temporary branch,
+# dispatches this workflow on the default branch with that commit as `sha`,
+# then downloads the `offload-<id>` artifact (output, exit code, --get files)
+# and deletes the branch. Inputs reach the scripts only through env vars.
+name: offload
+run-name: offload ${{ inputs.id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: Offload id (names the snapshot branch and the result artifact)
+        required: true
+        type: string
+      sha:
+        description: Snapshot commit to check out
+        required: true
+        type: string
+      runner:
+        description: Runner label
+        required: true
+        type: string
+        default: ubuntu-latest
+      command:
+        description: Base64-encoded bash command
+        required: true
+        type: string
+      get:
+        description: Newline-separated paths or globs to bring back
+        required: false
+        type: string
+        default: ''
+      timeout:
+        description: Job timeout in minutes
+        required: false
+        type: string
+        default: '60'
+      color:
+        description: Ask tools for coloured output
+        required: false
+        type: string
+        default: 'false'
+      cache:
+        description: Restore and save the dependency and build cache
+        required: false
+        type: string
+        default: 'true'
+
+permissions:
+  contents: read
+
+env:
+  OFFLOAD_CACHE_PATHS: |
+    ~/.cargo/registry/index
+    ~/.cargo/registry/cache
+    ~/.cargo/git/db
+    target
+    ~/.npm
+    ~/.local/share/pnpm/store
+    ~/Library/pnpm/store
+    ~/AppData/Local/pnpm/store
+    ~/.cache/yarn
+    ~/go/pkg/mod
+    ~/.cache/go-build
+    ~/Library/Caches/go-build
+    ~/AppData/Local/go-build
+    ~/.cache/pip
+    ~/Library/Caches/pip
+    ~/.cache/uv
+
+jobs:
+  run:
+    name: offload
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ fromJSON(inputs.timeout) }}
+    steps:
+      - name: Check out snapshot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+
+      - name: Restore build cache
+        id: cache
+        if: inputs.cache == 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.OFFLOAD_CACHE_PATHS }}
+          key: offload-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Cargo.lock', '**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/go.sum', '**/requirements*.txt', '**/poetry.lock', '**/uv.lock') }}
+          restore-keys: |
+            offload-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Run command
+        shell: bash
+        env:
+          OFFLOAD_COMMAND: ${{ inputs.command }}
+          OFFLOAD_COLOR: ${{ inputs.color }}
+        run: |
+          set +e
+          out="$RUNNER_TEMP/offload"
+          mkdir -p "$out"
+          cmd="$(printf '%s' "$OFFLOAD_COMMAND" | base64 -d)"
+          if [ "$OFFLOAD_COLOR" = true ]; then
+            export FORCE_COLOR=1 CLICOLOR_FORCE=1 CARGO_TERM_COLOR=always
+          fi
+          echo "+ $cmd"
+          bash -c "$cmd" < /dev/null 2>&1 | tee "$out/output.log"
+          code=${PIPESTATUS[0]}
+          echo "$code" > "$out/exit_code"
+          echo "exit code $code"
+
+      - name: Collect files
+        if: always() && inputs.get != ''
+        shell: bash
+        env:
+          OFFLOAD_GET: ${{ inputs.get }}
+        run: |
+          shopt -s nullglob dotglob
+          shopt -s globstar 2>/dev/null || true
+          out="$RUNNER_TEMP/offload"
+          mkdir -p "$out"
+          files=()
+          while IFS= read -r pat; do
+            [ -n "$pat" ] || continue
+            case "$pat" in
+              /*|..|../*|*/..|*/../*)
+                echo "skipped (outside the repository): $pat" | tee -a "$out/get.log"
+                continue ;;
+            esac
+            IFS=$'\n'
+            matches=( $pat )
+            unset IFS
+            found=0
+            for m in "${matches[@]}"; do
+              if [ -e "$m" ]; then
+                files+=( "$m" )
+                found=1
+              fi
+            done
+            [ "$found" = 1 ] || echo "no match: $pat" | tee -a "$out/get.log"
+          done <<< "$OFFLOAD_GET"
+          if [ ${#files[@]} -gt 0 ]; then
+            tar -czhf - -- "${files[@]}" > "$out/files.tgz"
+          fi
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: offload-${{ inputs.id }}
+          path: ${{ runner.temp }}/offload/
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Save build cache
+        if: ${{ !cancelled() && inputs.cache == 'true' && steps.cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.OFFLOAD_CACHE_PATHS }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Report exit code
+        if: always()
+        shell: bash
+        run: |
+          code="$(cat "$RUNNER_TEMP/offload/exit_code" 2>/dev/null || echo missing)"
+          if [ "$code" != 0 ]; then
+            echo "::error::command exit code: $code"
+            exit 1
+          fi
