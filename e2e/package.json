@@ -1,0 +1,9 @@
+{
+  "name": "vesper-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser check for Vesper. Run e2e/run.sh (needs Docker, Rust and Node).",
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}

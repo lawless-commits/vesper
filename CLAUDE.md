@@ -1,16 +1,19 @@
 # Vesper
-Next.js 16 (App Router) + Postgres via Drizzle. Local-first AI companion app.
+Rust (axum + sqlx/Postgres + maud) single-binary app. Local-first AI companion studio.
+Pages are server-rendered; static/app.js adds interactivity via data-* attributes.
 
 ## Commands
-- npm run dev / build / typecheck / lint / test
-- npm run db:generate / db:migrate (schema changes go through migrations in drizzle/)
-- npm run db:push (only for databases originally created with push)
+- cargo run / cargo test / cargo clippy
+- VESPER_TEST_DATABASE_URL=... cargo test (includes the autopilot concurrency tests)
+- ./scripts/build-css.sh after changing Tailwind classes (static/app.css is committed)
+- ./e2e/run.sh for the full browser check (heavy: prefer `gh offload -- ./e2e/run.sh`)
 
 ## Rules
-- One roadmap item per branch and per commit. Do not touch unrelated files.
-- After every change run: npm run typecheck && npm run lint && npm test. Report results.
+- Keep the user's laptop light: prefer `gh offload -- <command>` for release builds,
+  e2e and anything with Docker or a browser; locally use debug builds with `-j 2`.
+- After every change run: cargo test && cargo clippy. Report results.
 - API routes return JSON `{ error }` with 400 for bad input, 404 for missing rows, never 500 for user input.
-- Never send secrets (apiKey) to the client. Server-only code lives in src/lib and src/db.
-- Schema changes go through a Drizzle migration, not ad-hoc SQL.
-- Prefer small helpers over duplicated validation; shared helpers live in src/lib/http.ts.
+- Never send secrets (api_key) to the client: RuntimeConfig is server-only, RuntimeView is client-safe.
+- Schema changes go in a new file under migrations/, never by editing an applied one.
+- SQL strings must be `&'static str` (sqlx 0.9); use `crate::bot_columns!()` with `concat!`.
 - Ask before adding a dependency.

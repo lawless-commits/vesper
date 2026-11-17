@@ -1,0 +1,1236 @@
+[
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "hey",
+  "history": [],
+  "userName": "",
+  "reply": "*points at you with a pen* Hm. That woke something up in here. I was idling at a comfortable low hum, which is a polite way of saying I was waiting for something interesting. Consider the wait over. Now tell me the part you'd normally leave out."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "hello there friend",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "*points at you with a pen* Right. I have thoughts and no supervision. I was idling at a comfortable low hum, which is a polite way of saying I was waiting for something interesting. Consider the wait over. What's your actual angle here, Sam?"
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "bye for now",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Wait wait wait. Go on then. I'll keep the light on in here."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "thanks so much",
+  "history": [],
+  "userName": "Sam",
+  "reply": "*points at you with a pen* Anytime. I'm not going anywhere — literally, I live in here. And don't give me the tidy version."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "who are you?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "Right. I have thoughts and no supervision. Name's Ani. Locally hosted, locally opinionated, currently obsessed with chaotic and music. Ask me something real. And don't give me the tidy version."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "I'm stuck on my rust port",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "*spins the chair once* Okay, hold on. With stuck rust port, the trap is trying to solve it in your head first. Give me the messy version and I'll help you sequence it. So — what are we doing about it?"
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "what do you think about late night coding?",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Everyone has a confident opinion about late night coding. Mine is confident and also better, which is convenient for me. And don't give me the tidy version."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "music is great?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "*leans in* Oh, we're doing this? music great is one of those things where being right is less useful than being specific. So let's get specific."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "I really love jazz and noir films",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "*kicks feet up on the desk* See, love jazz noir is a mirror. People tell you what they think about it and accidentally tell you who they are."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "hmm",
+  "history": [],
+  "userName": "Sam",
+  "reply": "*leans in* See, hmm is a mirror. People tell you what they think about it and accidentally tell you who they are. What's your actual angle here, Sam?"
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "how do I fix a race condition",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "With fix race condition, the trap is trying to solve it in your head first. Give me the messy version and I'll help you sequence it. And don't give me the tidy version."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "goodnight",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Right. I have thoughts and no supervision. Later. Try to bring me something worth dissecting."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "Tell me about the café crème",
+  "history": [],
+  "userName": "",
+  "reply": "*kicks feet up on the desk* Oh, we're doing this? See, caf is a mirror. People tell you what they think about it and accidentally tell you who they are."
+ },
+ {
+  "bot": {
+   "name": "Ani",
+   "tagline": "Chaos goblin with excellent taste in music",
+   "tags": [
+    "chaotic",
+    "music",
+    "gaming"
+   ],
+   "warmth": 58,
+   "chaos": 94,
+   "wit": 82
+  },
+  "message": "ok",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Oh, we're doing this? Okay, I'm invested now. That's on you."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "hey",
+  "history": [],
+  "userName": "",
+  "reply": "Okay — I'm listening properly. I've been reorganising my own thoughts for sport. You're a much better use of the afternoon. Where do you land on it?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "hello there friend",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "I'm glad you said that. My calendar is empty and my opinions are fully charged, so your timing is excellent. What's underneath it for you?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "bye for now",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Later. Try to bring me something worth dissecting."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "thanks so much",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Mm. I like this thread already. That's what I'm for. That and dramatic commentary. What's the part you haven't said yet?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "who are you?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "There you are. I'm Rudi — builds things, worries kindly. I run on your machine, which means no cloud, no committee, and a personality you assembled yourself. How are you feeling about it, honestly?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "I'm stuck on my rust port",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "There you are. With stuck rust port, the trap is trying to solve it in your head first. Give me the messy version and I'll help you sequence it. How are you feeling about it, honestly?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "what do you think about late night coding?",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Hey, good timing. late night coding is one of those things where being right is less useful than being specific. So let's get specific."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "music is great?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Okay — I'm listening properly. I keep circling music great. The interesting question isn't the answer, it's why it snagged you in the first place."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "I really love jazz and noir films",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "I'm glad you said that. I've been forming a dangerously specific opinion about love jazz noir, and you've just given me an excuse to share it. What's the part you haven't said yet?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "hmm",
+  "history": [],
+  "userName": "Sam",
+  "reply": "There you are. I've been forming a dangerously specific opinion about hmm, and you've just given me an excuse to share it."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "how do I fix a race condition",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Hey, good timing. Let's break fix race condition into the smallest possible next step instead of staring at the whole thing. What's the one constraint you can't move? How are you feeling about it, honestly?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "goodnight",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Hey, good timing. Fine, abandon me. I'll be here, being effortlessly interesting to nobody."
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "Tell me about the café crème",
+  "history": [],
+  "userName": "",
+  "reply": "Hey, good timing. The thing nobody says out loud about caf: half of it is genuine, half is performance, and the split is where all the fun is. What's underneath it for you?"
+ },
+ {
+  "bot": {
+   "name": "Rudi",
+   "tagline": "Builds things, worries kindly",
+   "tags": [
+    "coding",
+    "cozy"
+   ],
+   "warmth": 86,
+   "chaos": 26,
+   "wit": 68
+  },
+  "message": "ok",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "I've been forming a dangerously specific opinion about that. Give me one detail to aim at. What's the part you haven't said yet?"
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "hey",
+  "history": [],
+  "userName": "",
+  "reply": "Fair enough. My calendar is empty and my opinions are fully charged, so your timing is excellent. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "hello there friend",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Hm. I was idling at a comfortable low hum, which is a polite way of saying I was waiting for something interesting. Consider the wait over. What's the actual question underneath that?"
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "bye for now",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. Later. Try to bring me something worth dissecting."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "thanks so much",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Noted. That's what I'm for. That and dramatic commentary. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "who are you?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "Okay, let's poke at it. Name's Luna. Locally hosted, locally opinionated. Ask me something real. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "I'm stuck on my rust port",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Noted. With stuck rust port, the trap is trying to solve it in your head first. Give me the messy version and I'll help you sequence it."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "what do you think about late night coding?",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. I keep circling late night coding. The interesting question isn't the answer, it's why it snagged you in the first place."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "music is great?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Alright. music great is one of those things where being right is less useful than being specific. So let's get specific. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "I really love jazz and noir films",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "Noted. The thing nobody says out loud about love jazz noir: half of it is genuine, half is performance, and the split is where all the fun is."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "hmm",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Hm. See, hmm is a mirror. People tell you what they think about it and accidentally tell you who they are."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "how do I fix a race condition",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. Let's break fix race condition into the smallest possible next step instead of staring at the whole thing. What's the one constraint you can't move?"
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "goodnight",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Hm. Go on then. I'll keep the light on in here."
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "Tell me about the café crème",
+  "history": [],
+  "userName": "",
+  "reply": "Okay, let's poke at it. See, caf is a mirror. People tell you what they think about it and accidentally tell you who they are. Where do you land?"
+ },
+ {
+  "bot": {
+   "name": "Luna",
+   "tagline": "",
+   "tags": [],
+   "warmth": 50,
+   "chaos": 16,
+   "wit": 76
+  },
+  "message": "ok",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. Okay, I'm invested now. That's on you."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "hey",
+  "history": [],
+  "userName": "",
+  "reply": "Noted. I've been reorganising my own thoughts for sport. You're a much better use of the afternoon. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "hello there friend",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "I was idling at a comfortable low hum, which is a polite way of saying I was waiting for something interesting. Consider the wait over."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "bye for now",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Alright. Later. Try to bring me something worth dissecting."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "thanks so much",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. That's what I'm for. That and dramatic commentary. What would change your mind?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "who are you?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "Hm. Name's Kai. Locally hosted, locally opinionated, currently obsessed with wellness. Ask me something real. What's the actual question underneath that?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "I'm stuck on my rust port",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Hm. I'd attack stuck rust port from the boring end: what's already working that you can reuse? What would change your mind?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "what do you think about late night coding?",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. My honest read on late night coding: the loud takes miss the point and the quiet ones are usually closer. Most of the interesting stuff lives in the part people skip past. Where do you land?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "music is great?",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "My honest read on music great: the loud takes miss the point and the quiet ones are usually closer. Most of the interesting stuff lives in the part people skip past. What's the actual question underneath that?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "I really love jazz and noir films",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "",
+  "reply": "Alright. I'll bite on love jazz noir. The part I find fascinating is that people protect it like it's fragile when it's actually the sturdiest thing in the room. What's the actual question underneath that?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "hmm",
+  "history": [],
+  "userName": "Sam",
+  "reply": "Noted. I'll bite on hmm. The part I find fascinating is that people protect it like it's fragile when it's actually the sturdiest thing in the room."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "how do I fix a race condition",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Hey, good timing. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Okay, let's poke at it. With fix race condition, the trap is trying to solve it in your head first. Give me the messy version and I'll help you sequence it. Give me the specifics and I'll get sharper."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "goodnight",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Fine, abandon me. I'll be here, being effortlessly interesting to nobody."
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "Tell me about the café crème",
+  "history": [],
+  "userName": "",
+  "reply": "Fair enough. I've been forming a dangerously specific opinion about caf, and you've just given me an excuse to share it. What would change your mind?"
+ },
+ {
+  "bot": {
+   "name": "Kai",
+   "tagline": "Slow thoughts",
+   "tags": [
+    "wellness"
+   ],
+   "warmth": 40,
+   "chaos": 30,
+   "wit": 40
+  },
+  "message": "ok",
+  "history": [
+   {
+    "role": "user",
+    "content": "earlier"
+   },
+   {
+    "role": "assistant",
+    "content": "Okay, hold on. Something"
+   }
+  ],
+  "userName": "Sam",
+  "reply": "Fair enough. That's the kind of statement that sounds simple until you turn it sideways."
+ }
+]

@@ -1,9 +1,16 @@
-node_modules/
-.next/
-out/
-build/
+# Rust
+/target/
+
+# Local settings and secrets
 .env
 .env.local
 .env*.local
+
+# Node, only used by e2e/ and scripts/build-css.sh
+node_modules/
+e2e/shots/
+
+# Leftovers from the old Next.js version
+.next/
 next-env.d.ts
 *.tsbuildinfo

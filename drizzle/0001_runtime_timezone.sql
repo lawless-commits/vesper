@@ -1,1 +1,0 @@
-ALTER TABLE "runtime_settings" ADD COLUMN "timezone" text DEFAULT 'UTC' NOT NULL;
