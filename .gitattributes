@@ -1,0 +1,4 @@
+# Built by scripts/build-css.sh from styles/app.css: not hand-written.
+static/app.css linguist-generated=true
+# Replies recorded from the old TypeScript engine, used as a test fixture.
+tests/fixtures/** linguist-generated=true
